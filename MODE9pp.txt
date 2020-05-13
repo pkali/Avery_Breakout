@@ -1,0 +1,32 @@
+;	MODE 9++
+
+	org $2000
+
+	mwa #dli $200
+
+	mva #$22 $22f
+ 
+	mwa #dl $230
+
+	mva #$40 $26f
+
+	mva #$c0 $d40e
+
+	jmp *
+
+
+dli	pha
+	sta $d40a
+ 
+	lda #13
+	sta $d405
+
+	lda #3
+	sta $d405
+
+	pla
+	rti
+
+dl	dta $90,$6f,a($f000)	; 2 puste linie, 1 linia trybu
+	:29 dta a($2f8f)		; $8f,$2f powtorzone 29 razy => 58 linii
+  	dta $41,a(dl)

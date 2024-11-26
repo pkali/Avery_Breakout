@@ -4,12 +4,12 @@
 ;あめでと
 ;---------------------------------------------------
 
-    icl '../lib/atari.hea'
-    icl '../lib/macro.hea'
+    icl 'lib/atarisys.asm'
+    icl 'lib/macro.asm'
 
 display=$a000
 screenWidth = 80 ;in pixels
-maxLines = 57 ; number of lines on the screen (must be odd)
+maxLines = 55 ; number of lines on the screen (must be odd)
 spawnProbability = (256*1/5)
 margin = 2 ; top and bottom screen safety margin
 racquetPosMin = $2 ; min position of the paddle moved by the user
@@ -37,7 +37,9 @@ maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
     org $2000
 ;---------------------------------------------------
 dl 
-		.by $80+$20		
+		.by $80+$20
+        dta $42,a(statusBuffer)
+        .by $80
 		dta $4f+$20,a(display)	 ;VSCROLL
 		:((maxlines-1)/2) dta a($2f8f)	
 
@@ -53,6 +55,12 @@ racquetDisp
     .byte $80, $80, $80, $80, $80
     :36 .byte $0
 
+;--------------------------------------------------
+statusBuffer
+ dta d" Lives: 5    HS: 000000   Score: 000000 "
+score=statusBuffer+33
+HiScore=statusBuffer+17
+Lives=statusBuffer+8
 ;--------------------------------------------------
 vint
     ;------------JOY-------------
@@ -488,6 +496,7 @@ dX_gr_dY__dX_dYpos
 		negw dX
 
 bounceDone
+        jsr ScoreUp
 ;spawn the new bally
 		; if there is still an empty slot for a new ball somewhere...
 			;lda RANDOM
@@ -602,7 +611,7 @@ endOfBallzLoop
     jpl flight
 
 
-		pause 0;all balls
+	;	pause 0;all balls
 
     lda eXistenZstackPtr
     cmp #maxBalls
@@ -713,6 +722,104 @@ clearDeadLoop
 
     rts
 ;--------------------------------------------------
+.proc ScoreUp
+;--------------------------------------------------
+    inc score+5
+    lda score+5
+    cmp #"9"+1  ; 9+1 character code
+    bne ScoreReady
+    lda #"0"    ; 0 character code
+    sta score+5
+    inc score+4
+    lda score+4
+    cmp #"9"+1  ; 9+1 character code
+    bne ScoreReady
+    lda #"0"    ; 0 character code
+    sta score+4
+    inc score+3
+    lda score+3
+    cmp #"9"+1  ; 9+1 character code
+    bne ScoreReady
+    lda #"0"    ; 0 character code
+    sta score+3
+    inc score+2
+    lda score+2
+    cmp #"9"+1  ; 9+1 character code
+    bne ScoreReady
+    lda #"0"    ; 0 character code
+    sta score+2
+    inc score+1
+    lda score+1
+    cmp #"9"+1  ; 9+1 character code
+    bne ScoreReady
+    lda #"0"    ; 0 character code
+    sta score+1
+    inc score
+ScoreReady
+    rts
+.endp
+;--------------------------------------------------
+.proc ScoreClear
+;--------------------------------------------------
+    lda #"0"
+    ldx #4
+@   sta score,x
+    dex
+    bpl @-
+    rts
+.endp
+;--------------------------------------------------
+.proc HiScoreR
+; It checks if the score is greater than hiscore.
+; If yes - rewrites the score to hiscore.
+;--------------------------------------------------
+    lda HiScore
+    cmp score
+    bcc higher1
+    bne lower
+    lda HiScore+1
+    cmp score+1
+    bcc higher2
+    bne lower
+    lda HiScore+2
+    cmp score+2
+    bcc higher3
+    bne lower
+    lda HiScore+3
+    cmp score+3
+    bcc higher4
+    bne lower
+    lda HiScore+4
+    cmp score+4
+    bcc higher5
+    bne lower
+    lda HiScore+5
+    cmp score+5
+    bcc higher6
+lower
+    rts
+higher1
+    lda score
+    sta HiScore
+higher2
+    lda score+1
+    sta HiScore+1
+higher3
+    lda score+2
+    sta HiScore+2
+higher4
+    lda score+3
+    sta HiScore+3
+higher5
+    lda score+4
+    sta HiScore+4
+higher6
+    lda score+5
+    sta HiScore+5
+    rts
+.endp
+
+;--------------------------------------------------
 clearScreen
 ;--------------------------------------------------
 		lda #0
@@ -744,7 +851,7 @@ noColourReset
 cycleCloop
 		lda colourCycleTab,y
 		;sta COLPM1,y
-		sta COLPM1S,y
+		sta PCOLR1,y
 		dey
 		bpl cycleCloop
 
@@ -795,13 +902,14 @@ brickColourTab
 initialize
 ;--------------------------------------------------
 		 
-		mva #$00 COLPM0S ; = $02C0 ;- - rejestr-cień COLPM0
+		mva #$00 PCOLR0 ; = $02C0 ;- - rejestr-cień COLPM0
 
 		jsr cycleColoursReset
 		
 		mva #$7C COLBAKS
 		
     mva #0 dliCount
+        jsr ScoreClear
 		jsr clearscreen
     jsr drawBricks
 		
@@ -899,8 +1007,8 @@ eXistenZstackFill
 		mva #screenWidth/2 racquetPos
     vmain vint,7
     lda #$80 ;+GTIACTLBITS
-    sta GTIACTL
-    sta GTICTLS
+    sta GRACTL
+    sta GPRIOR
     
     mva #1 colour
 

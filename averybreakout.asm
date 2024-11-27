@@ -503,6 +503,13 @@ dX_gr_dY__dX_dYpos
 
 bounceDone
         jsr ScoreUp
+        dew BricksInLevel
+        lda BricksInLevel
+        ora BricksInLevel+1
+        bne NoLevelEnd
+; all bricks gone - level ended!
+        jmp gameOver
+NoLevelEnd
 ;spawn the new bally
 		; if there is still an empty slot for a new ball somewhere...
 			;lda RANDOM
@@ -1065,6 +1072,8 @@ drawBricksLoop
 		cmp #maxBrickLines+margin*2
 		bne drawBricksLoopY
 
+; set number of bricks in this level
+        mwa #952 BricksInLevel
 		rts
 ;--------------------------------------------------
 randomStart
@@ -1094,7 +1103,8 @@ randomStart
     sta dyTableL,x
     rts
 ;--------------------------------------------------
-
+BricksInLevel
+    .word 0
 lineAdrL
     :margin .byte <marginLine ;8 lines of margin space
     :maxLines .byte <(display+40*#)

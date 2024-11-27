@@ -34,12 +34,13 @@ maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
     .zpvar temp .word 
     .zpvar clearCount clearBallNr .byte
     .zpvar DLI_A DLI_X dliCount .byte
+    .zpvar AutoPlay .byte   ; Auto Play flag ($80 - auto)
     org $2000
 ;---------------------------------------------------
 dl 
-		.by $80+$20
+		.by $20
         dta $42,a(statusBuffer)
-        .by $80
+        .by $80+$50
 		dta $4f+$20,a(display)	 ;VSCROLL
 		:((maxlines-1)/2) dta a($2f8f)	
 
@@ -157,6 +158,8 @@ JNotFire
 DLI
 	sta DLI_A
 	stx DLI_X
+    mva #$80 PRIOR
+
 	ldx dliCount
 	sta WSYNC
  
@@ -180,7 +183,7 @@ DLI
 ;--------------------------------------------------
 main
     jsr initialize
-
+    mva #$80 AutoPlay
 loop
 
     mva #maxBalls-1 currBall
@@ -289,10 +292,13 @@ noTop
     bcc noBottom
 
     ; check if the ball hits the racquette
+    bit AutoPlay
+    bmi GoAuto
     lda CONSOL
     and #%00000100 ; OPTION
     bne bounceNormally
-		jmp bottomBounce ; turns off the ball kill
+GoAuto
+	jmp bottomBounce ; turns off the ball kill
 bounceNormally
 
     lda ypos+1
@@ -611,14 +617,19 @@ endOfBallzLoop
     jpl flight
 
 
-	;	pause 0;all balls
-
+		pause 1 ;all balls
+    bit AutoPlay
+    bpl NoAuto
+		pause 2 ;additional pause if auto play mode
+    
+NoAuto
     lda eXistenZstackPtr
     cmp #maxBalls
     jne loop
 
     ;game over
 gameOver
+    jsr HiScoreCheckWrite
     lda RANDOM
     and #$07
 		sta COLPM0
@@ -769,7 +780,7 @@ ScoreReady
     rts
 .endp
 ;--------------------------------------------------
-.proc HiScoreR
+.proc HiScoreCheckWrite
 ; It checks if the score is greater than hiscore.
 ; If yes - rewrites the score to hiscore.
 ;--------------------------------------------------
@@ -1006,9 +1017,10 @@ eXistenZstackFill
 		;VBI
 		mva #screenWidth/2 racquetPos
     vmain vint,7
-    lda #$80 ;+GTIACTLBITS
-    sta GRACTL
+    lda #$0 ;+GTIACTLBITS
+;    sta PRIOR
     sta GPRIOR
+    sta COLBAKS
     
     mva #1 colour
 

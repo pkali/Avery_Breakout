@@ -183,7 +183,7 @@ DLI
 ;--------------------------------------------------
 main
     jsr initialize
-    mva #$80 AutoPlay
+    mva #$0 AutoPlay
 loop
 
     mva #maxBalls-1 currBall
@@ -627,6 +627,22 @@ NoAuto
     cmp #maxBalls
     jne loop
 
+DecreaseLives
+    dec Lives
+    lda Lives
+    cmp #"0"
+    beq gameOver
+NextLive
+    ldy #maxBalls
+    sty eXistenZstackPtr
+		;OK, one ball starts!
+        lda eXistenZstack,Y
+        dey
+        sty eXistenZstackPtr
+        tax
+		jsr randomStart ;just one random pixxxel 
+		                ;previously the whole band of ballz
+    jmp loop
     ;game over
 gameOver
     jsr HiScoreCheckWrite
@@ -921,6 +937,7 @@ initialize
 		
     mva #0 dliCount
         jsr ScoreClear
+        mva #"9" Lives
 		jsr clearscreen
     jsr drawBricks
 		

@@ -4,26 +4,26 @@
 ;あめでと
 ;---------------------------------------------------
 
-    icl 'lib/atarisys.asm'
-    icl 'lib/macro.asm'
+    icl 'lib/ATARISYS.ASM'
+    icl 'lib/MACRO.ASM'
 
 display=$a000
-screenWidth = 80 ;in pixels
-maxLines = 55 ; number of lines on the screen (must be odd)
+screenWidth = 80   ;in pixels
+maxLines = 55      ; number of lines on the screen (must be odd)
 spawnProbability = (256*1/5)
-margin = 2 ; top and bottom screen safety margin
+margin = 2         ; top and bottom screen safety margin
 racquetPosMin = $2 ; min position of the paddle moved by the user
 racquetPosMax = screenWidth-8 ; max position of the paddle moved by the user
 racquetSize = 10
-maxSpeed = 2; maximum speed of a ball. must be power of 2 ('and #' used)
-maxBalls = 100 ; maximum number of moving balls, <$80 (bpl used!) 
-maxMemory = 7 ; number of saved pixel positions 
-              ;Beware! For easier calc somewhere it uses "modulo maxMemory"
-              ;calculations and therefore this value must be a power of 2!
+maxSpeed = 2       ; maximum speed of a ball. must be power of 2 ('and #' used)
+maxBalls = 100     ; maximum number of moving balls, <$80 (bpl used!) 
+maxMemory = 7      ; number of saved pixel positions 
+                   ; Beware! For easier calc somewhere it uses "modulo maxMemory"
+                   ; calculations and therefore this value must be a power of 2 -1 (?)!
 maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
 
     .zpvar xpos ypos .word = $80 ; position of the ball
-    .zpvar colour .byte ; colour of the pixel to plot
+    .zpvar color .byte ; color of the pixel to plot
     .zpvar deXpos deYpos .byte ;position for deletion
     .zpvar dX dY .word ;main loop shortcuts to the table values 
     ;.zpvar dx dy .word ;delta
@@ -38,18 +38,18 @@ maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
     org $2000
 ;---------------------------------------------------
 dl 
-		.by $20
-        dta $42,a(statusBuffer)
-        .by $80+$50
-		dta $4f+$20,a(display)	 ;VSCROLL
-		:((maxlines-1)/2) dta a($2f8f)	
+    .by $20
+    dta $42,a(statusBuffer)
+    .by $80+$50
+    dta $4f+$20,a(display)	 ;VSCROLL
+    :((maxlines-1)/2) dta a($2f8f)	
 
-    ;----		
-		.by $42+$10 ;Hscroll
+    ;----    
+    .by $42+$10 ;Hscroll
 DLracquetAddr0
-		.wo racquetDisp
-		.by $41
-		.wo dl
+    .wo racquetDisp
+    .by $41
+    .wo dl
 ;---------------------------------------------------
 racquetDisp
     :42 .byte $0
@@ -58,7 +58,7 @@ racquetDisp
 
 ;--------------------------------------------------
 statusBuffer
- dta d" Lives: 5    HS: 000000   Score: 000000 "
+    dta d" Lives: 5    HS: 000000   Score: 000000 "
 score=statusBuffer+33
 HiScore=statusBuffer+17
 Lives=statusBuffer+8
@@ -142,16 +142,16 @@ JNotFire
     :4 lsr
     clc
     adc #'0'
-		sta hexDump
+    sta hexDump
  
     lda racquetPos
     and #$0F
     clc
     adc #'0'
-		sta hexDump+1
+    sta hexDump+1
  
-		mva #0 dliCount
-		mva #13 VSCROL
+    mva #0 dliCount
+    mva #13 VSCROL
     jmp XITVBV
 
 ;--------------------------------------------------
@@ -172,7 +172,7 @@ DLI
 	txa
 	asl
 	asl 
-	;lda brickColourTab,x
+	;lda brickcolorTab,x
 	sta COLBAK
 	
 	inx
@@ -187,7 +187,7 @@ main
 loop
 
     mva #maxBalls-1 currBall
-		jsr cycleColours
+    jsr cyclecolors
 
 flight
 
@@ -219,10 +219,10 @@ flight
     lda memCycleTable,x
     clc
     adc #1 ;next position in the table
-		cmp #maxMemory
-		bne notMaxMem
-		lda #0
-notMaxMem		
+    cmp #maxMemory
+    bne notMaxMem
+    lda #0
+notMaxMem    
     sta memCycleTable,x ; memCycleTable saved
     tax
     lda xposMemTableAdrL,x
@@ -249,23 +249,23 @@ notMaxMem
 ; deyxpos, deypos (.byte) - pixel position
 ;--------------------------------------------------
    	; let's calculate coordinates from xpos and ypos
-		;lda dexpos
-		lsr
-		tay
+    ;lda dexpos
+    lsr
+    tay
 ;---
-		;ldx deypos
-		lda lineAdrL,x
-		sta temp
-		lda lineAdrH,x
-		sta temp+1
+    ;ldx deypos
+    lda lineAdrL,x
+    sta temp
+    lda lineAdrH,x
+    sta temp+1
 
-		lda dexpos
-		and #$01
-		tax
+    lda dexpos
+    and #$01
+    tax
 	
-		lda (temp),y
-		and debittable,x
-		sta (temp),y
+    lda (temp),y
+    and debittable,x
+    sta (temp),y
 
     ;move the ball!!!
     adw xpos dX xpos
@@ -383,141 +383,141 @@ noRight
    	; high byte is the integer position
    	; low byte is the "fractional" part
     ; let's calculate coordinates from xpos and ypos
-		lda xpos+1
-		lsr 
-		tay
+    lda xpos+1
+    lsr 
+    tay
 ;---
-		ldx ypos+1
-		lda lineAdrL,x
-		sta temp
-		lda lineAdrH,x
-		sta temp+1
+    ldx ypos+1
+    lda lineAdrL,x
+    sta temp
+    lda lineAdrH,x
+    sta temp+1
 
-		ldx colour
-		
-		lda xpos+1
-		and #$01
-		bne pRightNibble
+    ldx color
+    
+    lda xpos+1
+    and #$01
+    bne pRightNibble
 pLeftNibble
-		lda (temp),y
-		sta collisionCheck
-		and #$0F
-		ora LNColtable,x
-		sta (temp),y
-		lda collisionCheck
-		and #$F0
-		cmp #%10000000
-		jne noCollision
-		jmp plotEnd ;unconditional branch
+    lda (temp),y
+    sta collisionCheck
+    and #$0F
+    ora LNColtable,x
+    sta (temp),y
+    lda collisionCheck
+    and #$F0
+    cmp #%10000000
+    jne noCollision
+    jmp plotEnd ;unconditional branch
 	
 pRightNibble
-		lda (temp),y
-		sta collisionCheck
-		and #$F0
-		ora RNColtable,x
-		sta (temp),y
-		lda collisionCheck
-		and #$0F
-		cmp #%00001000
-		jne noCollision
+    lda (temp),y
+    sta collisionCheck
+    and #$F0
+    ora RNColtable,x
+    sta (temp),y
+    lda collisionCheck
+    and #$0F
+    cmp #%00001000
+    jne noCollision
 
 plotEnd
 	
-		lda ypos+1
-		cmp #maxLines+margin-2-1
-		jcs noCollision ;ball is outside the screen!
+    lda ypos+1
+    cmp #maxLines+margin-2-1
+    jcs noCollision ;ball is outside the screen!
 
-		;switch direction, Charles
-		; an idea for assuming which direction to switch - dX or dY?
-		; on a diagram below in the middle there is an approached brick
+    ;switch direction, Charles
+    ; an idea for assuming which direction to switch - dX or dY?
+    ; on a diagram below in the middle there is an approached brick
 /*
-		 \      /
-		  \-dY /
-		   \  /
-		-dX [] -dX
-		   /  \
-		  /-dY \  
-		 /      \
-*/		
-		; it means:
-		; if |dX|>|dY| then dX == -dX
-		;   else  dY == -dY
-		
-		; get absolute values
-		lda dX+1
-		bpl dXpositive
+     \      /
+      \-dY /
+       \  /
+    -dX [] -dX
+       /  \
+      /-dY \  
+     /      \
+*/    
+    ; it means:
+    ; if |dX|>|dY| then dX == -dX
+    ;   else  dY == -dY
+    
+    ; get absolute values
+    lda dX+1
+    bpl dXpositive
 ;dX is negative here
-		lda dY+1
-		bpl dXneg_dYpos
+    lda dY+1
+    bpl dXneg_dYpos
 
 ;dX and dY are negative here
-		cmp dX+1
-		bcc dX_gr_dY__dX_dYneg
-		; |dY| >= |dX| ; hour 5
-		negw dY
-		jmp bounceDone
+    cmp dX+1
+    bcc dX_gr_dY__dX_dYneg
+    ; |dY| >= |dX| ; hour 5
+    negw dY
+    jmp bounceDone
 dX_gr_dY__dX_dYneg
-		; hour 4
-		negw dX
-		jmp bounceDone
+    ; hour 4
+    negw dX
+    jmp bounceDone
 
 dXneg_dYpos
-		; dY in A
-		clc
-		adc dX+1
-		bpl dY_gr_dX__dXneg_dYpos 
-		; |dX| > |dy|; hour 2
-		negw dX
-		jmp bounceDone
+    ; dY in A
+    clc
+    adc dX+1
+    bpl dY_gr_dX__dXneg_dYpos 
+    ; |dX| > |dy|; hour 2
+    negw dX
+    jmp bounceDone
 dY_gr_dX__dXneg_dYpos 
-		; hour 1
-		negw dY
-		jmp bounceDone
+    ; hour 1
+    negw dY
+    jmp bounceDone
 
 dXpositive
-		lda dY+1
-		bpl dX_dYpositive
+    lda dY+1
+    bpl dX_dYpositive
 ;dX positive, dY negative
-		clc
-		adc dX+1
-		bpl dX_gr_dY__dXpos_dYneg
-		; hour 7
-		negw dY
-		jmp bounceDone
-		
+    clc
+    adc dX+1
+    bpl dX_gr_dY__dXpos_dYneg
+    ; hour 7
+    negw dY
+    jmp bounceDone
+    
 dX_gr_dY__dXpos_dYneg
-		; hour 8
-		negw dX
-		jmp bounceDone
-		
+    ; hour 8
+    negw dX
+    jmp bounceDone
+    
 dX_dYpositive
-		;(dY+1)* is in A
-		cmp dX+1
-		bcc dX_gr_dY__dX_dYpos
-		; dY > dX ; hour 11
-		negw dY
-		jmp bounceDone
+    ;(dY+1)* is in A
+    cmp dX+1
+    bcc dX_gr_dY__dX_dYpos
+    ; dY > dX ; hour 11
+    negw dY
+    jmp bounceDone
 dX_gr_dY__dX_dYpos
-		; dY < dX ; hour 10
-		negw dX
+    ; dY < dX ; hour 10
+    negw dX
 
 bounceDone
-        jsr ScoreUp
-        dew BricksInLevel
-        lda BricksInLevel
-        ora BricksInLevel+1
-        bne NoLevelEnd
-; all bricks gone - level ended!
+    jsr ScoreUp
+    dew BricksInLevel
+    lda BricksInLevel
+    ora BricksInLevel+1
+    bne NoLevelEnd
+    ; all bricks gone - level ended!
         jmp gameOver
 NoLevelEnd
-;spawn the new bally
-		; if there is still an empty slot for a new ball somewhere...
-			;lda RANDOM
-			;cmp #spawnProbability
-			;bcs noCollision 
-		lda colour
-		cmp #1
-		bne noCollision
+    ;spawn the new bally
+    ; if there is still an empty slot for a new ball somewhere...
+    ;lda RANDOM
+    ;cmp #spawnProbability
+    ;bcs noCollision 
+    lda color
+    cmp #1
+    bne noCollision
 
 eXistenZcReate
     ;creates a new ball
@@ -548,13 +548,13 @@ eXistenZcReate
 ; random initial speed and direction
     lda random
     bpl dXplus
-		
-		lda #-1
+    
+    lda #-1
     sta dxTableH,x
     bne dXlower
 
 dXplus
-		lda #1	
+    lda #1	
     sta dxTableH,x
 dXlower    
     lda random
@@ -563,7 +563,7 @@ dXlower
 
     ;randomize 1 maxSpeed-1 ;dy can not be too small or the game would take forever
     lda #1
-		sta dyTableH,x
+    sta dyTableH,x
     lda random
     sta dyTableL,x
  
@@ -618,16 +618,16 @@ flightLoopEnd
 
 
 endOfBallzLoop
-		;pause
-		   
+    ;pause
+       
     dec currBall
     jpl flight
 
 
-		pause 1 ;all balls
+    pause 1 ;all balls
     bit AutoPlay
     bpl NoAuto
-		pause 2 ;additional pause if auto play mode
+    pause 2 ;additional pause if auto play mode
     
 NoAuto
     lda eXistenZstackPtr
@@ -642,20 +642,20 @@ DecreaseLives
 NextLive
     ldy #maxBalls
     sty eXistenZstackPtr
-		;OK, one ball starts!
-        lda eXistenZstack,Y
-        dey
-        sty eXistenZstackPtr
-        tax
-		jsr randomStart ;just one random pixxxel 
-		                ;previously the whole band of ballz
+    ;OK, one ball starts!
+    lda eXistenZstack,Y
+    dey
+    sty eXistenZstackPtr
+    tax
+    jsr randomStart ;just one random pixxxel 
+                    ;previously the whole band of ballz
     jmp loop
     ;game over
 gameOver
     jsr HiScoreCheckWrite
     lda RANDOM
     and #$07
-		sta COLPM0
+    sta COLPM0
     jmp gameOver
 
 ;-------------------
@@ -670,60 +670,60 @@ delayLoop
 fatplot
 ; xpos, ypos (.byte) - pixel position
 ; xpos<80
-; pixel colour in "colour"
+; pixel color in "color"
 ;--------------------------------------------------
    	; let's calculate coordinates from xpos and ypos
-		lda xpos
-		lsr 
-		tay
+    lda xpos
+    lsr 
+    tay
 ;---
-		ldx ypos
-		lda lineAdrL,x
-		sta temp
-		lda lineAdrH,x
-		sta temp+1
-		
-		ldx colour
+    ldx ypos
+    lda lineAdrL,x
+    sta temp
+    lda lineAdrH,x
+    sta temp+1
+    
+    ldx color
 
-		lda xpos
-		and #$01
-		bne fpRightNibble
+    lda xpos
+    and #$01
+    bne fpRightNibble
 fpLeftNibble
-		lda (temp),y
-		and #$0F
-		ora LNColtable,x
-		sta (temp),y
-		rts
+    lda (temp),y
+    and #$0F
+    ora LNColtable,x
+    sta (temp),y
+    rts
 	
 fpRightNibble
-		lda (temp),y
-		and #$F0
-		ora RNColtable,x
-		sta (temp),y
-		rts
+    lda (temp),y
+    and #$F0
+    ora RNColtable,x
+    sta (temp),y
+    rts
 ;--------------------------------------------------
 fatdeplot
 ; deyxpos, deypos (.byte) - pixel position
 ;--------------------------------------------------
    	; let's calculate coordinates from xpos and ypos
-		lda dexpos
-		lsr
-		tay
+    lda dexpos
+    lsr
+    tay
 ;---
-		ldx deypos
-		lda lineAdrL,x
-		sta temp
-		lda lineAdrH,x
-		sta temp+1
+    ldx deypos
+    lda lineAdrL,x
+    sta temp
+    lda lineAdrH,x
+    sta temp+1
 
-		lda dexpos
-		and #$01
-		tax
+    lda dexpos
+    and #$01
+    tax
 	
-		lda (temp),y
-		and debittable,x
-		sta (temp),y
-		rts
+    lda (temp),y
+    and debittable,x
+    sta (temp),y
+    rts
 ;--------------------------------------------------
 clearDeadBall
 ;--------------------------------------------------
@@ -856,46 +856,46 @@ higher6
 ;--------------------------------------------------
 clearScreen
 ;--------------------------------------------------
-		lda #0
-		tax
-Loopi1
+    lda #0
+    tax
+@
     :(maxLines*40/256+1) sta display+$100*#,x
-		inx
-		bne Loopi1
-		rts
+    inx
+    bne @-
+    rts
 ;--------------------------------------------------
-cycleColoursReset
-		ldy #6
+cyclecolorsReset
+    ldy #6
 cycleRloop
-		lda colourCycleTabReset,y
-		sta colourCycleTab,y
-		dey
-		bpl cycleRloop
-		mva #0 colour
+    lda colorCycleTabReset,y
+    sta colorCycleTab,y
+    dey
+    bpl cycleRloop
+    mva #0 color
 ;--------------------------------------------------
-cycleColours
+cyclecolors
 ;--------------------------------------------------
-		inc colour
-		lda colour
-		cmp #8
-		bne noColourReset
-		mva #1 colour
-noColourReset
-		ldy #6
+    inc color
+    lda color
+    cmp #8
+    bne nocolorReset
+    mva #1 color
+nocolorReset
+    ldy #6
 cycleCloop
-		lda colourCycleTab,y
-		;sta COLPM1,y
-		sta PCOLR1,y
-		dey
-		bpl cycleCloop
+    lda colorCycleTab,y
+    ;sta COLPM1,y
+    sta PCOLR1,y
+    dey
+    bpl cycleCloop
 
-;shift colours
+;shift colors
 /*
-						2
-					2	4
-				2	4	6
-			2	4	6	8
-		2	4	6	8	10
+            2
+        	2	4
+        2	4	6
+    	2	4	6	8
+    2	4	6	8	10
 	2	4	6	8	10	12
 2	4	6	8	10	12	14
 4	6	8	10	12	14	2
@@ -906,95 +906,95 @@ cycleCloop
 14	2	4	6	8	10	12
 2	4	6	8	10	12	14
 4	6	8	10	12	14	
-6	8	10	12	14		
-8	10	12	14			
-10	12	14				
-12	14					
-14						
+6	8	10	12	14    
+8	10	12	14    	
+10	12	14        
+12	14        	
+14            
 261	262	263	264	265	266	267
 */
-cct = colourCycleTab
-		ldx cct+6
-		mva cct+5 cct+6
-		mva cct+4 cct+5
-		mva cct+3 cct+4
-		mva cct+2 cct+3
-		mva cct+1 cct+2
-		mva cct+0 cct+1
-		stx cct+0
+cct = colorCycleTab
+    ldx cct+6
+    mva cct+5 cct+6
+    mva cct+4 cct+5
+    mva cct+3 cct+4
+    mva cct+2 cct+3
+    mva cct+1 cct+2
+    mva cct+0 cct+1
+    stx cct+0
 
-		rts
-colourCycleTab
+    rts
+colorCycleTab
 
-		.by 14,2,4,6,8,10,12
+    .by 14,2,4,6,8,10,12
 
-colourCycleTabReset
-		.by 14,2,4,6,8,10,12
-brickColourTab
-		.by 0
+colorCycleTabReset
+    .by 14,2,4,6,8,10,12
+brickcolorTab
+    .by 0
 ;--------------------------------------------------
 initialize
 ;--------------------------------------------------
-		 
-		mva #$00 PCOLR0 ; = $02C0 ;- - rejestr-cień COLPM0
+     
+    mva #$00 PCOLR0 ; = $02C0 ;- - rejestr-cień COLPM0
 
-		jsr cycleColoursReset
-		
-		mva #$7C COLBAKS
-		
+    jsr cyclecolorsReset
+    
+    mva #$7C COLBAKS
+    
     mva #0 dliCount
-        jsr ScoreClear
-        mva #"9" Lives
-		jsr clearscreen
+    jsr ScoreClear
+    mva #"9" Lives
+    jsr clearscreen
     jsr drawBricks
-		
+    
     lda dmactls
     and #$fc
     ora #$02     ; normal screen width
     ;ora #$01     ; narrow screen width
     sta dmactls
     mwa #dl dlptrs
-		vdli DLI
+    vdli DLI
 
 
 
 ; prepare mem address tables (for "snake" routine)
-		
-		;first address initialized
-		mva #<xposMemTable xposMemTableAdrL
-		mva #>xposMemTable xposMemTableAdrH
-		mva #<yposMemTable yposMemTableAdrL
-		mva #>yposMemTable yposMemTableAdrH
-		;now add maxBalls to the following addresses
-		;just take the previous one and add "maxBalls"
-		ldx #0
+    
+    ;first address initialized
+    mva #<xposMemTable xposMemTableAdrL
+    mva #>xposMemTable xposMemTableAdrH
+    mva #<yposMemTable yposMemTableAdrL
+    mva #>yposMemTable yposMemTableAdrH
+    ;now add maxBalls to the following addresses
+    ;just take the previous one and add "maxBalls"
+    ldx #0
 initLoop1
-		clc
-		lda xposMemTableAdrL,x
-		adc #<maxBalls ; maxBalls <$80
-		sta xposMemTableAdrL+1,x
-		lda xposMemTableAdrH,x
-		adc #>maxBalls ; maxBalls <$80, so it is == 0
-		sta xposMemTableAdrH+1,x
-		clc
-		lda yposMemTableAdrL,x
-		adc #<maxBalls ; maxBalls <$80
-		sta yposMemTableAdrL+1,x
-		lda yposMemTableAdrH,x
-		adc #>maxBalls ; maxBalls <$80, so it is == 0
-		sta yposMemTableAdrH+1,x
-		inx
-		cpx #maxMemory-1
-		bne initLoop1
-		;snake memory addressess initialized!
-		
-		;clear the balleXistenZ (nothing is bouncing!)
-		;and other tables
-		ldx #0
-		txa
+    clc
+    lda xposMemTableAdrL,x
+    adc #<maxBalls ; maxBalls <$80
+    sta xposMemTableAdrL+1,x
+    lda xposMemTableAdrH,x
+    adc #>maxBalls ; maxBalls <$80, so it is == 0
+    sta xposMemTableAdrH+1,x
+    clc
+    lda yposMemTableAdrL,x
+    adc #<maxBalls ; maxBalls <$80
+    sta yposMemTableAdrL+1,x
+    lda yposMemTableAdrH,x
+    adc #>maxBalls ; maxBalls <$80, so it is == 0
+    sta yposMemTableAdrH+1,x
+    inx
+    cpx #maxMemory-1
+    bne initLoop1
+    ;snake memory addressess initialized!
+    
+    ;clear the balleXistenZ (nothing is bouncing!)
+    ;and other tables
+    ldx #0
+    txa
 eXistenZclearLoop
-		sta balleXistenZ,x
-		sta dxTableL,x
+    sta balleXistenZ,x
+    sta dxTableL,x
     sta dxTableH,x
     sta dyTableL,x
     sta dyTableH,x
@@ -1004,10 +1004,10 @@ eXistenZclearLoop
     sta yposTableH,x
     sta memCycleTable,x
 
-		inx
-		cpx #maxBalls
-		bne eXistenZclearLoop
-    sta balleXistenZcatch		
+    inx
+    cpx #maxBalls
+    bne eXistenZclearLoop
+    sta balleXistenZcatch    
 
 
     dex
@@ -1025,30 +1025,28 @@ eXistenZstackFill
     ;sty clearPtr
 
 
-		;OK, one ball starts!
-		
-		    ;ldy eXistenZstackPtr
-        lda eXistenZstack,Y
-        dey
-        sty eXistenZstackPtr
+    ;OK, one ball starts!
+    
+    ;ldy eXistenZstackPtr
+    lda eXistenZstack,Y
+    dey
+    sty eXistenZstackPtr
+    tax
 
-        tax
-		
-
-		jsr randomStart ;just one random pixxxel 
-		                ;previously the whole band of ballz
-		                
-		;VBI
-		mva #screenWidth/2 racquetPos
+    jsr randomStart ;just one random pixxxel 
+                    ;previously the whole band of ballz
+                    
+    ;VBI
+    mva #screenWidth/2 racquetPos
     vmain vint,7
     lda #$0 ;+GTIACTLBITS
 ;    sta PRIOR
     sta GPRIOR
     sta COLBAKS
     
-    mva #1 colour
+    mva #1 color
 
-		rts
+    rts
 ;--------------------------------------------------
 drawBricks
 ;--------------------------------------------------
@@ -1057,24 +1055,24 @@ drawBricks
 ; for x=margin to screenWidth-margin:
 ;   for y=margin to maxBrickLines+margin:
 ;     fatplot(x,y)
-	 	mva #8 colour
-		mva #margin*2 ypos
+	 	mva #8 color
+    mva #margin*2 ypos
 drawBricksLoopY
-		mva #margin*3 xpos
+    mva #margin*3 xpos
 drawBricksLoop
-		jsr fatplot
-		inc xpos
-		lda xpos
-		cmp #screenWidth-margin*3
-		bne drawBricksLoop
-		inc ypos
-		lda ypos
-		cmp #maxBrickLines+margin*2
-		bne drawBricksLoopY
+    jsr fatplot
+    inc xpos
+    lda xpos
+    cmp #screenWidth-margin*3
+    bne drawBricksLoop
+    inc ypos
+    lda ypos
+    cmp #maxBrickLines+margin*2
+    bne drawBricksLoopY
 
 ; set number of bricks in this level
         mwa #952 BricksInLevel
-		rts
+    rts
 ;--------------------------------------------------
 randomStart
 ; X - ball number
@@ -1084,10 +1082,10 @@ randomStart
 
     ;randomize margin $ff-margin
     lda #40
-		sta xposTableH,x
+    sta xposTableH,x
     ;randomize margin*2+maxBrickLines maxLines-margin*4
     lda #30
-		sta yposTableH,x
+    sta yposTableH,x
 
 ; random initial speed and direction
     ;randomize 0 maxSpeed-1
@@ -1119,7 +1117,7 @@ lineAdrH
 bittable
     .byte %11110000
     .byte %00001111
-RNColtable ; Right Nibble Colour Table
+RNColtable ; Right Nibble color Table
     .byte %00000000
     .byte %00000001
     .byte %00000010
@@ -1129,7 +1127,7 @@ RNColtable ; Right Nibble Colour Table
     .byte %00000110
     .byte %00000111
     .byte %00001000
-LNColtable ; Left Nibble Colour Table
+LNColtable ; Left Nibble color Table
     .byte %00000000
     .byte %00010000
     .byte %00100000
@@ -1152,7 +1150,7 @@ xposTableL  :maxBalls .byte 0 ; "fractional" part
 xposTableH  :maxBalls .byte 0 ; "fractional" part
 yposTableL  :maxBalls .byte 0 ; 
 yposTableH  :maxBalls .byte 0 ; 
-;ball position memory tables - the ball trace works like a "snake" 
+; ball position memory tables - the ball trace works like a "snake" 
 ; (one set, one erased)
 ; there are "maxMemory" number of tables, "maxballs" length each
 ; too bad their addressess are not known in advance, 

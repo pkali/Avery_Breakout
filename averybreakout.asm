@@ -1140,18 +1140,46 @@ randomStart
     mwa #Menu_data inlevel
     ;mwa #Level000_data inlevel
     ldy #0
+    sty BricksInLevel
+    sty BricksInLevel+1
 nextnumber
     lda (inlevel),y
     inw inlevel
     cmp #155
-    bne nextnumber
+    beq nextnumber2
+    ; check valid characters
+    ldx #9
+@   cmp Numbers,x
+    beq valid1
+    dex
+    bpl @-
+    jmp LevelDataError
+valid1  ; value in X register
+    ; now we must multiply BricksInLevel by 10
+    asl BricksInLevel
+    rol BricksInLevel+1
+    mwa BricksInLevel temp
+    asl BricksInLevel
+    rol BricksInLevel+1
+    asl BricksInLevel
+    rol BricksInLevel+1
+    adw temp BricksInLevel BricksInLevel
+    ; and add value
+    clc
+    txa
+    adc BricksInLevel
+    sta BricksInLevel
+    bcc @+
+    inc BricksInLevel+1
+@   jmp nextnumber
+
 nextnumber2
     lda (inlevel),y
     inw inlevel
     cmp #155
     bne nextnumber2
 ; make bricks
-
+    mwa #0 temp
 	mva #8 color
     mva #margin*2 ypos
 drawBricksLoopY
@@ -1167,6 +1195,7 @@ drawBricksLoop
     cmp #' '
     beq NoBrick     ; if no brick
     jsr fatplot
+    inw temp    ; real number of bricks
 NoBrick
     inc xpos
     lda xpos
@@ -1178,6 +1207,12 @@ EndOfLine
     cmp #maxBrickLines+margin*2
     bne drawBricksLoopY    
 LevelDataEnd
+    cpw BricksInLevel temp
+    bcc BricksOK    ; if defined bricks number is bigger tan real
+    mwa temp BricksInLevel  ; set to real brick number
+BricksOK
+    rts
+LevelDataError
     rts
 .endp
 ;--------------------------------------------------
@@ -1214,7 +1249,7 @@ LevelFileBuff
 BricksInLevel
     .word 0
 Numbers
-    .byte "0123456789"
+    .byte '0123456789'
 lineAdrL
     :margin .byte <marginLine ;8 lines of margin space
     :maxLines .byte <(display+40*#)

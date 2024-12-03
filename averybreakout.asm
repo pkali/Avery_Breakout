@@ -69,7 +69,8 @@ score=statusBuffer+33
 HiScore=statusBuffer+17
 Lives=statusBuffer+8
 ;--------------------------------------------------
-vint
+.proc vint
+;--------------------------------------------------
     ;------------JOY-------------
     ;happy happy joy joy
     ;check for joystick now
@@ -157,9 +158,10 @@ JNotFire
     mva #0 dliCount
     mva #13 VSCROL
     jmp XITVBV
-
+.endp
 ;--------------------------------------------------
-DLI
+.proc DLI
+;--------------------------------------------------
 /*  # fancy shmancy vscroll screen shenanigangs to get the square pixels
 	sta DLI_A
 	stx DLI_X
@@ -207,6 +209,7 @@ DLI
     ;ldx DLI_X
     lda DLI_A
     rti
+.endp
 ;--------------------------------------------------
 main
     jsr initialize
@@ -701,7 +704,7 @@ delayLoop
     bne delayLoop
     jmp endOfBallzLoop
 ;--------------------------------------------------
-fatplot
+.proc fatplot
 ; xpos, ypos (.byte) - pixel position
 ; xpos<80
 ; pixel color in "color"
@@ -735,8 +738,9 @@ fpRightNibble
     ora RNColtable,x
     sta (temp),y
     rts
+.endp
 ;--------------------------------------------------
-fatdeplot
+.proc fatdeplot
 ; deyxpos, deypos (.byte) - pixel position
 ;--------------------------------------------------
    	; let's calculate coordinates from xpos and ypos
@@ -758,8 +762,9 @@ fatdeplot
     and debittable,x
     sta (temp),y
     rts
+.endp
 ;--------------------------------------------------
-clearDeadBall
+.proc clearDeadBall
 ;--------------------------------------------------
 ;dead ball in clearBallNr
    
@@ -789,6 +794,7 @@ clearDeadLoop
     bpl clearDeadLoop    
 
     rts
+.endp
 ;--------------------------------------------------
 .proc ScoreUp
 ;--------------------------------------------------
@@ -886,9 +892,8 @@ higher6
     sta HiScore+5
     rts
 .endp
-
 ;--------------------------------------------------
-clearScreen
+.proc clearScreen
 ;--------------------------------------------------
     lda #0
     tax
@@ -897,8 +902,10 @@ clearScreen
     inx
     bne @-
     rts
+.endp
 ;--------------------------------------------------
-cyclecolorsReset
+.proc cyclecolorsReset
+;--------------------------------------------------
     ldy #6
 cycleRloop
     lda colorCycleTabReset,y
@@ -906,8 +913,9 @@ cycleRloop
     dey
     bpl cycleRloop
     mva #0 color
+.endp
 ;--------------------------------------------------
-cyclecolors
+.proc cyclecolors
 ;--------------------------------------------------
     inc color
     lda color
@@ -958,6 +966,8 @@ cct = colorCycleTab
     stx cct+0
 
     rts
+.endp
+;--------------------------------------------------
 colorCycleTab
 
     .by 14,2,4,6,8,10,12
@@ -967,7 +977,7 @@ colorCycleTabReset
 brickcolorTab
     .by 0
 ;--------------------------------------------------
-initialize
+.proc initialize
 ;--------------------------------------------------
      
     mva #$00 PCOLR0 ; = $02C0 ;- - rejestr-cień COLPM0
@@ -1082,8 +1092,9 @@ eXistenZstackFill
     mva #1 color
 
     rts
+.endp
 ;--------------------------------------------------
-drawBricks
+.proc drawBricks
 ;--------------------------------------------------
 
 ; solid maxBrickLines field
@@ -1108,8 +1119,9 @@ drawBricksLoop
 ; set number of bricks in this level
         mwa #952 BricksInLevel
     rts
+.endp
 ;--------------------------------------------------
-randomStart
+.proc randomStart
 ; X - ball number
 ;--------------------------------------------------
     lda #1
@@ -1135,8 +1147,10 @@ randomStart
     lda #1
     sta dyTableL,x
     rts
+.endp
 ;--------------------------------------------------
 .proc BuildLevelFromBuffer
+;--------------------------------------------------
     mwa #Menu_data inlevel
     ;mwa #Level000_data inlevel
     ldy #0
@@ -1215,6 +1229,7 @@ BricksOK
 LevelDataError
     rts
 .endp
+;--------------------------------------------------
 ;--------------------------------------------------
 Menu_data
     .byte '200',155 ; number of bricks in ATASCII

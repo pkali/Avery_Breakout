@@ -44,10 +44,10 @@ dl
     ;.by $80+$50  # fancy shmancy vscroll square pixels
     ;dta $4f+$20,a(display)	 ;VSCROLL
     ;:((maxlines-1)/2) dta a($2f8f)	
-    ;.by SKIP1+DLII
+    .by SKIP1+DLII
     .rept (maxlines-1), #
-    dta MODEF+LMS+DLII, a(display+screenBytes*:1)
     :3 dta MODEF+LMS, a(display+screenBytes*:1)
+    dta MODEF+LMS+DLII, a(display+screenBytes*:1)
     .endr
     ;----    
     .by MODE2+LMS+SCH ;Hscroll
@@ -198,6 +198,7 @@ DLI
     lda VCOUNT
     asl 
     asl
+    sta WSYNC
     sta COLBAK
     
     ;inx
@@ -527,7 +528,14 @@ dX_gr_dY__dX_dYpos
     negw dX
 
 bounceDone
+    ; if Auto Play or OPTION key presset - no score
+    bit AutoPlay
+    bmi NoScoreUp
+    lda CONSOL
+    and #%00000100 ; OPTION
+    beq NoScoreUp
     jsr ScoreUp
+NoScoreUp
     dew BricksInLevel
     lda BricksInLevel
     ora BricksInLevel+1

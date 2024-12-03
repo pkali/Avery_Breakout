@@ -991,6 +991,7 @@ brickcolorTab
     mva #"9" Lives
     jsr clearscreen
     ;jsr drawBricks
+    mva #$ff LevelType
     jsr BuildLevelFromBuffer
     
     lda dmactls
@@ -1151,8 +1152,17 @@ drawBricksLoop
 ;--------------------------------------------------
 .proc BuildLevelFromBuffer
 ;--------------------------------------------------
+    lda LevelType
+    beq level000
+    bmi levelTitle
+    mwa #LevelFileBuff inlevel
+    jmp PrepareLevel
+levelTitle
     mwa #Menu_data inlevel
-    ;mwa #Level000_data inlevel
+    jmp PrepareLevel
+level000
+    mwa #Level000_data inlevel
+PrepareLevel
     ldy #0
     sty BricksInLevel
     sty BricksInLevel+1
@@ -1188,13 +1198,22 @@ valid1  ; value in X register
 @   jmp nextnumber
 
 nextnumber2
+    sty BigBrickFlag    ; #0
+    lda (inlevel),y
+    inw inlevel
+    cmp #'1'
+    beq singlepixel
+    cmp #'2'
+    bne LevelDataError
+doublepixel
+    dec BigBrickFlag    ; #$ff
+singlepixel
     lda (inlevel),y
     inw inlevel
     cmp #155
-    bne nextnumber2
+    bne singlepixel
 ; make bricks
     mwa #0 temp
-	mva #8 color
     mva #margin*2 ypos
 drawBricksLoopY
     mva #0 xpos
@@ -1208,17 +1227,28 @@ drawBricksLoop
     beq EndOfLine   ; next line
     cmp #' '
     beq NoBrick     ; if no brick
-    jsr fatplot
+    ldy #8
     inw temp    ; real number of bricks
+    bit BigBrickFlag
+    bpl OnePixel
+    inw temp    ; real number of bricks
+OnePixel
 NoBrick
+    sty color
+    jsr fatplot
     inc xpos
+    bit BigBrickFlag
+    bpl SmallBrick
+    jsr fatplot ; second bixel of big brick
+    inc xpos
+SmallBrick
     lda xpos
     cmp #screenWidth
     bne drawBricksLoop
 EndOfLine
     inc ypos
     lda ypos
-    cmp #maxBrickLines+margin*2
+    cmp #maxlines
     bne drawBricksLoopY    
 LevelDataEnd
     cpw BricksInLevel temp
@@ -1227,7 +1257,9 @@ LevelDataEnd
 BricksOK
     rts
 LevelDataError
-    rts
+    ; errer in data - set level to o (internal) and draw level
+    mva #0 LevelType
+    jmp level000
 .endp
 ;--------------------------------------------------
 ;--------------------------------------------------
@@ -1251,7 +1283,7 @@ Menu_data
     .byte 155
     .byte 0
 Level000_data
-    .byte '952',155 ; number of bricks in ATASCII
+    .byte '952',155 ; number of bricks (pixes) in ATASCII
     .byte '2',155   ; brick size in pixels
     ;          0         1         2         3
     ;          0123456789012345678901234567890123456789
@@ -1261,8 +1293,12 @@ Level000_data
 LevelFileBuff
     .ds (screenWidth*maxLines)+20   ; Buffer for data from the level file
 ;--------------------------------------------------
+BigBrickFlag
+    .byte 0
 BricksInLevel
     .word 0
+LevelType
+    .byte 0 ; level type $00 - first level, $01 - level from buffer, $ff - title screen  
 Numbers
     .byte '0123456789'
 lineAdrL

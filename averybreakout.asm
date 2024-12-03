@@ -7,8 +7,9 @@
     icl 'lib/ATARISYS.ASM'
     icl 'lib/MACRO.ASM'
 
-display=$a000
+display = $a000
 screenWidth = 80   ;in pixels
+screenBytes = screenWidth/2   ; in bytes
 maxLines = 55      ; number of lines on the screen (must be odd)
 spawnProbability = (256*1/5)
 margin = 2         ; top and bottom screen safety margin
@@ -16,7 +17,7 @@ racquetPosMin = $2 ; min position of the paddle moved by the user
 racquetPosMax = screenWidth-8 ; max position of the paddle moved by the user
 racquetSize = 10
 maxSpeed = 2       ; maximum speed of a ball. must be power of 2 ('and #' used)
-maxBalls = 100     ; maximum number of moving balls, <$80 (bpl used!) 
+maxBalls = 40      ; maximum number of moving balls, <$80 (bpl used!) 
 maxMemory = 7      ; number of saved pixel positions 
                    ; Beware! For easier calc somewhere it uses "modulo maxMemory"
                    ; calculations and therefore this value must be a power of 2 -1 (?)!
@@ -38,17 +39,21 @@ maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
     org $2000
 ;---------------------------------------------------
 dl 
-    .by $20
-    dta $42,a(statusBuffer)
-    .by $80+$50
-    dta $4f+$20,a(display)	 ;VSCROLL
-    :((maxlines-1)/2) dta a($2f8f)	
-
+    .by SKIP3
+    dta MODE2+LMS,a(statusBuffer)
+    ;.by $80+$50  # fancy shmancy vscroll square pixels
+    ;dta $4f+$20,a(display)	 ;VSCROLL
+    ;:((maxlines-1)/2) dta a($2f8f)	
+    ;.by SKIP1+DLII
+    .rept (maxlines-1), #
+    dta MODEF+LMS+DLII, a(display+screenBytes*:1)
+    :3 dta MODEF+LMS, a(display+screenBytes*:1)
+    .endr
     ;----    
-    .by $42+$10 ;Hscroll
+    .by MODE2+LMS+SCH ;Hscroll
 DLracquetAddr0
     .wo racquetDisp
-    .by $41
+    .by JVB
     .wo dl
 ;---------------------------------------------------
 racquetDisp
@@ -117,8 +122,6 @@ jNotRight
 JNotFire
 */
   
-
-
     lda racquetPos
 
     sec
@@ -156,6 +159,7 @@ JNotFire
 
 ;--------------------------------------------------
 DLI
+/*  # fancy shmancy vscroll screen shenanigangs to get the square pixels
 	sta DLI_A
 	stx DLI_X
     mva #$80 PRIOR
@@ -180,6 +184,27 @@ DLI
 	ldx DLI_X
 	lda DLI_A
 	rti
+*/
+    sta DLI_A
+    ;stx DLI_X
+    mva #$80 PRIOR
+
+    ;ldx dliCount
+
+    ;txa
+    ;asl
+    ;asl 
+    ;lda brickcolorTab,x
+    lda VCOUNT
+    asl 
+    asl
+    sta COLBAK
+    
+    ;inx
+    ;stx dliCount
+    ;ldx DLI_X
+    lda DLI_A
+    rti
 ;--------------------------------------------------
 main
     jsr initialize

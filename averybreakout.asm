@@ -32,7 +32,8 @@ maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
     ;this static point precision is emulated with .word calcs, just a result is the high byte
     .zpvar currBall collisionCheck racquetPos MyClok eXistenZstackPtr .byte
     .zpvar xMemAddr yMemAddr .word ; address where to store memories of the current ball
-    .zpvar temp .word 
+    .zpvar temp .word
+    .zpvar inlevel .word
     .zpvar clearCount clearBallNr .byte
     .zpvar DLI_A DLI_X dliCount .byte
     .zpvar AutoPlay .byte   ; Auto Play flag ($80 - auto)
@@ -979,7 +980,8 @@ initialize
     jsr ScoreClear
     mva #"9" Lives
     jsr clearscreen
-    jsr drawBricks
+    ;jsr drawBricks
+    jsr BuildLevelFromBuffer
     
     lda dmactls
     and #$fc
@@ -1134,30 +1136,85 @@ randomStart
     sta dyTableL,x
     rts
 ;--------------------------------------------------
-Level000_data
-    .byte "100",155 ; number of bricks in ATASCII
-    .byte "1",155   ; brick size in pixels
+.proc BuildLevelFromBuffer
+    mwa #Menu_data inlevel
+    ;mwa #Level000_data inlevel
+    ldy #0
+nextnumber
+    lda (inlevel),y
+    inw inlevel
+    cmp #155
+    bne nextnumber
+nextnumber2
+    lda (inlevel),y
+    inw inlevel
+    cmp #155
+    bne nextnumber2
+; make bricks
+
+	mva #8 color
+    mva #margin*2 ypos
+drawBricksLoopY
+    mva #0 xpos
+drawBricksLoop
+    ; get data
+    ldy #0
+    lda (inlevel),y
+    beq LevelDataEnd    ; if end of data
+    inw inlevel
+    cmp #155
+    beq EndOfLine   ; next line
+    cmp #' '
+    beq NoBrick     ; if no brick
+    jsr fatplot
+NoBrick
+    inc xpos
+    lda xpos
+    cmp #screenWidth
+    bne drawBricksLoop
+EndOfLine
+    inc ypos
+    lda ypos
+    cmp #maxBrickLines+margin*2
+    bne drawBricksLoopY    
+LevelDataEnd
+    rts
+.endp
+;--------------------------------------------------
+Menu_data
+    .byte '200',155 ; number of bricks in ATASCII
+    .byte '1',155   ; brick size in pixels
     ;      0         1         2         3         4         5         6         7            
     ;      01234567890123456789012345678901234567890123456789012345678901234567890123456789
     .byte 155
-    .byte "     ####    ##    ##  #######  ######    ##    ##",155
-    .byte "    ######   ##    ##  ##       ##   ##    ##  ##",155
-    .byte "   ##    ##   ##  ##   #####    ######      ####",155
-    .byte "   ########    ####    ##       ##  ##       ##",155
-    .byte "   ##    ##     ##     #######  ##   ##      ##",155
+    .byte '                   ####    ##    ##  #######  ######    ##    ##',155
+    .byte '                  ######   ##    ##  ##       ##   ##    ##  ##',155
+    .byte '                 ##    ##   ##  ##   #####    ######      ####',155
+    .byte '                 ########    ####    ##       ##  ##       ##',155
+    .byte '                 ##    ##     ##     #######  ##   ##      ##',155
     .byte 155
-    .byte "   #####    ######   #######    ####    ##    ##   ######   ##    ##  ########",155
-    .byte "   ##  ##   ##   ##  ##        ######   ##  ##    ##    ##  ##    ##     ##",155
-    .byte "   #####    ######   #####    ##    ##  ####      ##    ##  ##    ##     ##",155
-    .byte "   ##   ##  ##  ##   ##       ########  ##  ##    ##    ##  ##    ##     ##",155
-    .byte "   ######   ##   ##  #######  ##    ##  ##    ##   ######    ######      ## ",155
+    .byte '   #####    ######   #######    ####    ##    ##   ######   ##    ##  ########',155
+    .byte '   ##  ##   ##   ##  ##        ######   ##  ##    ##    ##  ##    ##     ##',155
+    .byte '   #####    ######   #####    ##    ##  ####      ##    ##  ##    ##     ##',155
+    .byte '   ##   ##  ##  ##   ##       ########  ##  ##    ##    ##  ##    ##     ##',155
+    .byte '   ######   ##   ##  #######  ##    ##  ##    ##   ######    ######      ##',155
     .byte 155
+    .byte 0
+Level000_data
+    .byte '952',155 ; number of bricks in ATASCII
+    .byte '2',155   ; brick size in pixels
+    ;          0         1         2         3
+    ;          0123456789012345678901234567890123456789
+    .byte 155,155,155
+    :14 .byte '   ##################################',155
     .byte 0
 LevelFileBuff
     .ds (screenWidth*maxLines)+20   ; Buffer for data from the level file
 ;--------------------------------------------------
 BricksInLevel
     .word 0
+Numbers
+    .byte "0123456789"
 lineAdrL
     :margin .byte <marginLine ;8 lines of margin space
     :maxLines .byte <(display+40*#)

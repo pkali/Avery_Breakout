@@ -220,10 +220,78 @@ JNotFire
 .endp
 ;--------------------------------------------------
 main
+;--------------------------------------------------
     jsr initialize
     mva #$0 AutoPlay
-loop
+    
+gameloop
+    jsr PlayLevel
+    bit EndLevelFlag    ; reason for end level
+    bmi EndOfLife   ; end of life :)
+    ; end of level (level up)
+    jsr NextLevel
+    jmp gameloop
+EndOfLife
+    dec Lives   ; decrease Lives
+    lda Lives
+    cmp #"0"
+    beq gameOver    ; if no lives - game over
+    jsr NextLive
+    jmp gameloop
+gameOver
+    ;game over
+    jsr HiScoreCheckWrite
+@   lda RANDOM
+    and #$07
+    sta COLPM0
+    jmp @-
 
+;--------------------------------------------------
+.proc NextLive
+;--------------------------------------------------
+    ldy #maxBalls
+    sty eXistenZstackPtr
+    ;OK, one ball starts!
+    lda eXistenZstack,Y
+    dey
+    sty eXistenZstackPtr
+    tax
+    jsr randomStart ;just one random pixxxel 
+                    ;previously the whole band of ballz
+    rts
+.endp
+;--------------------------------------------------
+.proc NextLevel
+;--------------------------------------------------
+    lda LevelType
+    beq level000
+    bmi levelTitle
+    ; load level from disk
+loadNext
+    jsr FileUp
+    jsr LoadLevelData
+levelTitle
+    jsr clearscreen
+    jsr BuildLevelFromBuffer
+    jsr initialize.ClearTables
+    jsr cyclecolorsReset
+    rts ; start level
+level000
+    mva #1 LevelType    ; switch to files
+    ; reset file number to 000
+    ldx #2
+@   lda StartLevelNumber,x
+    sta LevelNumber,x
+    dex
+    bpl @-
+    jmp loadNext
+.endp
+
+
+;--------------------------------------------------
+.proc PlayLevel
+;--------------------------------------------------
+loop
     mva #maxBalls-1 currBall
     jsr cyclecolors
 
@@ -679,29 +747,10 @@ NoAuto
     cmp #maxBalls
     jne loop
 
-DecreaseLives
-    dec Lives
-    lda Lives
-    cmp #"0"
-    beq gameOver
-NextLive
-    ldy #maxBalls
-    sty eXistenZstackPtr
-    ;OK, one ball starts!
-    lda eXistenZstack,Y
-    dey
-    sty eXistenZstackPtr
-    tax
-    jsr randomStart ;just one random pixxxel 
-                    ;previously the whole band of ballz
-    jmp loop
-    ;game over
-gameOver
-    jsr HiScoreCheckWrite
-    lda RANDOM
-    and #$07
-    sta COLPM0
-    jmp gameOver
+    ; level over
+    mva #$ff EndLevelFlag
+    rts
+    
 
 ;-------------------
 ballDoesNotexist
@@ -711,30 +760,12 @@ delayLoop
     dex    
     bne delayLoop
     jmp endOfBallzLoop
-;-------------------
+
 GoNextLevel
-    lda LevelType
-    beq level000
-    bmi levelTitle
-    ; load level from disk
-loadNext
-    jsr FileUp
-    jsr LoadLevelData
-levelTitle
-    jsr clearscreen
-    jsr BuildLevelFromBuffer
-    jsr initialize.ClearTables
-    jsr cyclecolorsReset
-    jmp NextLive    ; start level
-level000
-    mva #1 LevelType    ; switch to files
-    ; reset file number to 000
-    ldx #2
-@   lda StartLevelNumber,x
-    sta LevelNumber,x
-    dex
-    bpl @-
-    jmp loadNext
+    mva #0 EndLevelFlag     ; level ended!
+    rts
+    
+.endp
 ;--------------------------------------------------
 .proc fatplot
 ; xpos, ypos (.byte) - pixel position
@@ -1164,7 +1195,7 @@ drawBricksLoop
     lda #40
     sta xposTableH,x
     ;randomize margin*2+maxBrickLines maxLines-margin*4
-    lda #30
+    lda #50
     sta yposTableH,x
 
 ; random initial speed and direction
@@ -1409,6 +1440,8 @@ StartLevelNumber
 fname
     .byte 'D:LEVEL000.DAT',EOLA
 ;--------------------------------------------------
+EndLevelFlag
+    .byte 0 ; $ff - level over, $00 - level ended
 BigBrickFlag
     .byte 0
 BricksInLevel

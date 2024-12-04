@@ -66,6 +66,20 @@ dl_level
     .by JVB
     .wo dl_level
 ;---------------------------------------------------
+dl_start
+    .by SKIP3,SKIP8,SKIP8
+    dta 6+LMS,a(StartText)
+    dta 6,SKIP4
+    dta 6,SKIP8,SKIP8
+    dta 6
+    .by SKIP1+DLII
+    .rept 20, #
+    :3 dta MODEF+LMS, a(display+screenBytes*:1)
+    dta MODEF+LMS+DLII, a(display+screenBytes*:1)
+    .endr
+    ;----   
+    .by JVB
+    .wo dl_start
 ;---------------------------------------------------
 dl_over 
     .by SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8
@@ -91,6 +105,11 @@ LevelText
 OverText
     dta d"     GAME OVER      "
     dta d" YOUR SCORE: 000000 "
+StartText
+    dta d"                   ,"
+    dta d"GAME BY PIRX & PECUS"
+    dta d"   MUSIC by ALEX    "
+    dta d"press start to START"
 ;--------------------------------------------------
     icl 'fileio.asm'
 ;--------------------------------------------------
@@ -286,7 +305,12 @@ gameOver
 .proc StartScreen
 ;--------------------------------------------------
     jsr MakeDarkScreen
-    mwa #dl dlptrs
+    mva #$ff AutoPlay
+    sta LevelType   ; Title
+    mva #"9" Lives
+    jsr clearscreen
+    jsr BuildLevelFromBuffer
+    mwa #dl_start dlptrs
     lda #$0 ;+GTIACTLBITS
 ;    sta PRIOR
     sta GPRIOR
@@ -294,11 +318,6 @@ gameOver
     lda #%00110010  ; normal screen width, DL on, P/M off
     sta dmactls
     pause 1
-    mva #$ff AutoPlay
-    sta LevelType   ; Title
-    mva #"9" Lives
-    jsr clearscreen
-    jsr BuildLevelFromBuffer
 StartLoop
     jsr PlayLevel
     bit EndLevelFlag    ; reason for end level
@@ -363,7 +382,7 @@ level000
     mwa #dl_level dlptrs
     lda #%00110010  ; normal screen width, DL on, P/M off
     sta dmactls
-    pause 40
+    pause 80
     rts
 .endp
 ;--------------------------------------------------
@@ -378,7 +397,7 @@ level000
     mwa #dl_over dlptrs
     lda #%00110010  ; normal screen width, DL on, P/M off
     sta dmactls
-    pause 80
+    pause 20
     
     rts
 .endp
@@ -856,7 +875,7 @@ endOfBallzLoop
     pause 1 ;all balls
     bit AutoPlay
     bpl NoAuto
-    pause 2 ;additional pause if auto play mode
+    pause 1 ;additional pause if auto play mode (slower)
     lda CONSOL
     and #%00000001 ; START
     beq LevelOver   ; Start pressed in Auto Play - exit

@@ -7,6 +7,9 @@
     icl 'lib/ATARISYS.ASM'
     icl 'lib/MACRO.ASM'
 
+EOLA    = 155   ; Atari EOL code
+CR_PC   = 13    ; PC CR code
+LF_PC   = 10    ; PC LF code
 display = $a000
 screenWidth = 80   ;in pixels
 screenBytes = screenWidth/2   ; in bytes
@@ -1261,7 +1264,11 @@ PrepareLevel
 nextnumber
     lda (inlevel),y
     inw inlevel
-    cmp #155
+    cmp #CR_PC  ; skip PC CR
+    beq nextnumber
+    cmp #EOLA   ; Atari LF
+    beq nextnumber2
+    cmp #LF_PC  ; PC LF
     beq nextnumber2
     ; check valid characters
     ldx #9
@@ -1296,15 +1303,20 @@ nextnumber2
     cmp #'1'
     beq singlepixel
     cmp #'2'
-    bne LevelDataError
+    jne LevelDataError
 doublepixel
     dec BigBrickFlag    ; #$ff
 singlepixel
     lda (inlevel),y
     inw inlevel
-    cmp #155
+    cmp #CR_PC  ; skip PC CR
+    beq singlepixel
+    cmp #EOLA   ; Atari LF
+    beq makeBricks
+    cmp #LF_PC  ; PC LF
     bne singlepixel
 ; make bricks
+makeBricks
     mwa #0 temp
     mva #margin*2 ypos
 drawBricksLoopY
@@ -1315,7 +1327,11 @@ drawBricksLoop
     lda (inlevel),y
     beq LevelDataEnd    ; if end of data
     inw inlevel
-    cmp #155
+    cmp #CR_PC  ; skip PC CR
+    beq drawBricksLoop
+    cmp #EOLA   ; Atari LF
+    beq EndOfLine
+    cmp #LF_PC  ; PC LF
     beq EndOfLine   ; next line
     cmp #' '
     beq NoBrick     ; if no brick
@@ -1356,31 +1372,31 @@ LevelDataError
 ;--------------------------------------------------
 ;--------------------------------------------------
 Menu_data
-    .byte '200',155 ; number of bricks in ATASCII
-    .byte '1',155   ; brick size in pixels
+    .byte '200',EOLA ; number of bricks in ATASCII
+    .byte '1',EOLA   ; brick size in pixels
     ;      0         1         2         3         4         5         6         7            
     ;      01234567890123456789012345678901234567890123456789012345678901234567890123456789
-    .byte 155
-    .byte '                   ####    ##    ##  #######  ######    ##    ##',155
-    .byte '                  ######   ##    ##  ##       ##   ##    ##  ##',155
-    .byte '                 ##    ##   ##  ##   #####    ######      ####',155
-    .byte '                 ########    ####    ##       ##  ##       ##',155
-    .byte '                 ##    ##     ##     #######  ##   ##      ##',155
-    .byte 155
-    .byte '   #####    ######   #######    ####    ##    ##   ######   ##    ##  ########',155
-    .byte '   ##  ##   ##   ##  ##        ######   ##  ##    ##    ##  ##    ##     ##',155
-    .byte '   #####    ######   #####    ##    ##  ####      ##    ##  ##    ##     ##',155
-    .byte '   ##   ##  ##  ##   ##       ########  ##  ##    ##    ##  ##    ##     ##',155
-    .byte '   ######   ##   ##  #######  ##    ##  ##    ##   ######    ######      ##',155
-    .byte 155
+    .byte EOLA
+    .byte '                   ####    ##    ##  #######  ######    ##    ##',EOLA
+    .byte '                  ######   ##    ##  ##       ##   ##    ##  ##',EOLA
+    .byte '                 ##    ##   ##  ##   #####    ######      ####',EOLA
+    .byte '                 ########    ####    ##       ##  ##       ##',EOLA
+    .byte '                 ##    ##     ##     #######  ##   ##      ##',EOLA
+    .byte EOLA
+    .byte '   #####    ######   #######    ####    ##    ##   ######   ##    ##  ########',EOLA
+    .byte '   ##  ##   ##   ##  ##        ######   ##  ##    ##    ##  ##    ##     ##',EOLA
+    .byte '   #####    ######   #####    ##    ##  ####      ##    ##  ##    ##     ##',EOLA
+    .byte '   ##   ##  ##  ##   ##       ########  ##  ##    ##    ##  ##    ##     ##',EOLA
+    .byte '   ######   ##   ##  #######  ##    ##  ##    ##   ######    ######      ##',EOLA
+    .byte EOLA
     .byte 0
 Level000_data
-    .byte '100',155   ; '952',155 ; number of bricks (pixes) in ATASCII
-    .byte '2',155   ; brick size in pixels
+    .byte '100',EOLA   ; '952',EOLA ; number of bricks (pixes) in ATASCII
+    .byte '2',EOLA   ; brick size in pixels
     ;          0         1         2         3
     ;          0123456789012345678901234567890123456789
-    .byte 155,155,155
-    :14 .byte '   ##################################',155
+    .byte EOLA,EOLA,EOLA
+    :14 .byte '   ##################################',EOLA
     .byte 0
 LevelFileBuff
 LevelFileBuffLen=(screenWidth*maxLines)+20
@@ -1391,7 +1407,7 @@ LevelNumber
 StartLevelNumber
     .byte '000'
 fname
-    .byte 'D:LEVEL000.DAT',$9b
+    .byte 'D:LEVEL000.DAT',EOLA
 ;--------------------------------------------------
 BigBrickFlag
     .byte 0

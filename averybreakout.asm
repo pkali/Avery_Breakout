@@ -222,8 +222,15 @@ JNotFire
 main
 ;--------------------------------------------------
     jsr initialize
-    mva #$0 AutoPlay
+    jsr StartScreen
     
+    mva #$0 AutoPlay    
+    jsr ScoreClear
+    mva #"9" Lives
+    jsr clearscreen
+    mva #$0 LevelType
+    jsr initialize.ClearTables
+    jsr BuildLevelFromBuffer
 gameloop
     jsr PlayLevel
     bit EndLevelFlag    ; reason for end level
@@ -246,6 +253,24 @@ gameOver
     sta COLPM0
     jmp @-
 
+;--------------------------------------------------
+.proc StartScreen
+;--------------------------------------------------
+    mva #$ff AutoPlay
+    sta LevelType   ; Title
+    mva #"9" Lives
+    jsr clearscreen
+    jsr BuildLevelFromBuffer
+StartLoop
+    jsr PlayLevel
+    bit EndLevelFlag    ; reason for end level
+    bmi EndOfStartScreen
+    ; end of level (level up)
+    jsr NextLevel
+    jmp StartLoop
+EndOfStartScreen
+    rts
+.endp
 ;--------------------------------------------------
 .proc NextLive
 ;--------------------------------------------------
@@ -274,7 +299,6 @@ levelTitle
     jsr clearscreen
     jsr BuildLevelFromBuffer
     jsr initialize.ClearTables
-    jsr cyclecolorsReset
     rts ; start level
 level000
     mva #1 LevelType    ; switch to files
@@ -741,12 +765,15 @@ endOfBallzLoop
     bit AutoPlay
     bpl NoAuto
     pause 2 ;additional pause if auto play mode
+    lda CONSOL
+    and #%00000001 ; START
+    beq LevelOver   ; Start pressed in Auto Play - exit
     
 NoAuto
     lda eXistenZstackPtr
     cmp #maxBalls
     jne loop
-
+LevelOver
     ; level over
     mva #$ff EndLevelFlag
     rts
@@ -1050,12 +1077,6 @@ brickcolorTab
     mva #$7C COLBAKS
     
     mva #0 dliCount
-    jsr ScoreClear
-    mva #"9" Lives
-    jsr clearscreen
-    ;jsr drawBricks
-    mva #$0 LevelType
-    jsr BuildLevelFromBuffer
     
     lda dmactls
     and #$fc
@@ -1394,6 +1415,7 @@ LevelDataEnd
     bcc BricksOK    ; if defined bricks number is bigger tan real
     mwa temp BricksInLevel  ; set to real brick number
 BricksOK
+    jsr cyclecolorsReset
     rts
 LevelDataError
     ; errer in data - set level to o (internal) and draw level

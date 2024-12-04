@@ -1199,7 +1199,7 @@ brickcolorTab
     mwa #dl dlptrs
     vdli DLI
 
-
+ClearTables
 
 ; prepare mem address tables (for "snake" routine)
     
@@ -1230,7 +1230,6 @@ initLoop1
     cpx #maxMemory-1
     bne initLoop1
     ;snake memory addressess initialized!
-ClearTables    
     ;clear the balleXistenZ (nothing is bouncing!)
     ;and other tables
     ldx #0

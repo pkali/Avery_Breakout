@@ -550,7 +550,7 @@ NoScoreUp
     ora BricksInLevel+1
     bne NoLevelEnd
     ; all bricks gone - level ended!
-        jmp gameOver
+        jmp GoNextLevel
 NoLevelEnd
     ;spawn the new bally
     ; if there is still an empty slot for a new ball somewhere...
@@ -708,6 +708,30 @@ delayLoop
     dex    
     bne delayLoop
     jmp endOfBallzLoop
+;-------------------
+GoNextLevel
+    lda LevelType
+    beq level000
+    bmi levelTitle
+    ; load level from disk
+loadNext
+    jsr FileUp
+    jsr LoadLevelData
+levelTitle
+    jsr clearscreen
+    jsr BuildLevelFromBuffer
+    jsr initialize.ClearTables
+    jsr cyclecolorsReset
+    jmp NextLive    ; start level
+level000
+    mva #1 LevelType    ; switch to files
+    ; reset file number to 000
+    ldx #2
+@   lda StartLevelNumber,x
+    sta LevelNumber,x
+    dex
+    bpl @-
+    jmp loadNext
 ;--------------------------------------------------
 .proc fatplot
 ; xpos, ypos (.byte) - pixel position
@@ -996,7 +1020,7 @@ brickcolorTab
     mva #"9" Lives
     jsr clearscreen
     ;jsr drawBricks
-    mva #$ff LevelType
+    mva #$0 LevelType
     jsr BuildLevelFromBuffer
     
     lda dmactls
@@ -1038,7 +1062,7 @@ initLoop1
     cpx #maxMemory-1
     bne initLoop1
     ;snake memory addressess initialized!
-    
+ClearTables    
     ;clear the balleXistenZ (nothing is bouncing!)
     ;and other tables
     ldx #0
@@ -1198,7 +1222,7 @@ bget_error
     beq go_close
 open_error
     mva #0 LevelType    ; set level to internal 000
-    ; reset file number to 001
+    ; reset file number to 000
     ldx #2
 @   lda StartLevelNumber,x
     sta LevelNumber,x
@@ -1353,9 +1377,9 @@ LevelFileBuff
 LevelFileBuffLen=(screenWidth*maxLines)+20
     .ds LevelFileBuffLen   ; Buffer for data from the level file
 LevelNumber
-    .byte '001'
+    .byte '000'
 StartLevelNumber
-    .byte '001'
+    .byte '000'
 fname
     .byte 'D:LEVEL000.DAT',$9b
 ;--------------------------------------------------

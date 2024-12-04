@@ -294,10 +294,12 @@ gameOver
     jsr HiScoreCheckWrite
     jsr GameOverScreen
 @   lda RANDOM
-    and #$07
-    sta COLPM0
+    and #%00001110
+    sta COLPF0
     lda CONSOL
     and #%00000010 ; SELECT
+    beq main
+    lda TRIG0   ; fire
     beq main
     jmp @-
 

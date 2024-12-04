@@ -7,17 +7,16 @@
  
     ldx #$10            ;IOCB #1
     lda #$03            ;komenda: OPEN
-    sta iccmd,x
+    sta ICCOM,x
     lda #<fname         ;adres nazwy pliku
-    sta icbufa,x
+    sta ICBAL,x
     lda #>fname
-    sta icbufa+1,x
+    sta ICBAH,x
     lda #04            ;kod dostępu: $04 odczyt, $08 zapis, $09 dopisywanie, $0c odczyt/zapis
-    sta icax1,x
+    sta ICAX1,x
     lda #$00            ;dodatkowy parametr, $00 jest zawsze dobre
-    sta icax2,x 
+    sta ICAX2,x 
     jmp ciov
-fname .byte "D:LEVEL000.DAT",$9b
 .endp
 ;--------------------------------------------------
 .proc bget 
@@ -26,15 +25,15 @@ fname .byte "D:LEVEL000.DAT",$9b
 
     ldx #$10            ;IOCB #1
     lda #$07            ;komenda: GET BYTES / BINARY READ
-    sta iccmd,x
+    sta ICCOM,x
     lda #<LevelFileBuff        ;adres w pamieci, gdzie maja trafic dane
-    sta icbufa,x
+    sta ICBAL,x
     lda #>LevelFileBuff
-    sta icbufa+1,x
+    sta ICBAH,x
     lda #<(LevelFileBuffLen-2)        ;wielkosc bloku danych w bajtach
-    sta icbufl,x
+    sta ICBLL,x
     lda #>(LevelFileBuffLen-2)
-    sta icbufl+1,x
+    sta ICBLH,x
     jmp ciov
 .endp
 ;--------------------------------------------------
@@ -43,7 +42,7 @@ fname .byte "D:LEVEL000.DAT",$9b
 ; CLOSE #1
     ldx #$10            ;IOCB #1
     lda #$0c            ;komenda: CLOSE
-    sta iccmd,x
+    sta ICCOM,x
     jmp ciov
 .endp
 

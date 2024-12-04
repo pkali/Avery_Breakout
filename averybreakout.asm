@@ -1155,6 +1155,60 @@ drawBricksLoop
     rts
 .endp
 ;--------------------------------------------------
+.proc FileUp
+;--------------------------------------------------
+    inc LevelNumber+2
+    lda LevelNumber+2
+    cmp #'9'+1  ; 9+1 character code
+    bne NumberReady
+    lda #'0'    ; 0 character code
+    sta LevelNumber+2
+    inc LevelNumber+1
+    lda LevelNumber+1
+    cmp #'9'+1  ; 9+1 character code
+    bne NumberReady
+    lda #'0'    ; 0 character code
+    sta LevelNumber+1
+    inc LevelNumber
+NumberReady
+    rts
+.endp
+;--------------------------------------------------
+.proc LoadLevelData
+;--------------------------------------------------
+    lda LevelType
+    beq level000
+    bmi levelTitle
+    ; load level from disk
+    ; prepare number in filename
+    ldx #2
+@   lda LevelNumber,x
+    sta fname+7,x
+    dex
+    bpl @-
+    jsr close
+    jsr open
+    bmi open_error
+    jsr bget
+    bmi bget_error
+go_close    jsr close
+    rts
+bget_error
+    cpy #136 ; EOF
+    beq go_close
+open_error
+    mva #0 LevelType    ; set level to internal 000
+    ; reset file number to 001
+    ldx #2
+@   lda StartLevelNumber,x
+    sta LevelNumber,x
+    dex
+    bpl @-
+level000
+levelTitle
+    rts 
+.endp   
+;--------------------------------------------------
 .proc BuildLevelFromBuffer
 ;--------------------------------------------------
     lda LevelType
@@ -1298,6 +1352,12 @@ Level000_data
 LevelFileBuff
 LevelFileBuffLen=(screenWidth*maxLines)+20
     .ds LevelFileBuffLen   ; Buffer for data from the level file
+LevelNumber
+    .byte '001'
+StartLevelNumber
+    .byte '001'
+fname
+    .byte 'D:LEVEL000.DAT',$9b
 ;--------------------------------------------------
 BigBrickFlag
     .byte 0

@@ -251,6 +251,9 @@ gameOver
 @   lda RANDOM
     and #$07
     sta COLPM0
+    lda CONSOL
+    and #%00000010 ; SELECT
+    beq main
     jmp @-
 
 ;--------------------------------------------------

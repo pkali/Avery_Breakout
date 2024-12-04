@@ -60,6 +60,21 @@ DLracquetAddr0
     .by JVB
     .wo dl
 ;---------------------------------------------------
+dl_level 
+    .by SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8
+    dta 6+LMS,a(LevelText)
+    .by JVB
+    .wo dl_level
+;---------------------------------------------------
+;---------------------------------------------------
+dl_over 
+    .by SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8
+    dta 6+LMS,a(OverText)
+    .by SKIP8
+    dta 6
+    .by JVB
+    .wo dl_over
+;---------------------------------------------------
 racquetDisp
     :42 .byte $0
     .byte $80, $80, $80, $80, $80
@@ -71,7 +86,11 @@ statusBuffer
 score=statusBuffer+33
 HiScore=statusBuffer+17
 Lives=statusBuffer+8
-
+LevelText
+    dta d" entering level 000 "
+OverText
+    dta d"     GAME OVER      "
+    dta d" YOUR SCORE: 000000 "
 ;--------------------------------------------------
     icl 'fileio.asm'
 ;--------------------------------------------------
@@ -221,8 +240,10 @@ JNotFire
 ;--------------------------------------------------
 main
 ;--------------------------------------------------
+    jsr MakeDarkScreen
     jsr initialize
     jsr StartScreen
+    jsr MakeDarkScreen
     
     mva #$0 AutoPlay    
     jsr ScoreClear
@@ -231,12 +252,16 @@ main
     mva #$0 LevelType
     jsr initialize.ClearTables
     jsr BuildLevelFromBuffer
+    jsr LevelScreen
 gameloop
+    jsr MainScreen
     jsr PlayLevel
     bit EndLevelFlag    ; reason for end level
     bmi EndOfLife   ; end of life :)
     ; end of level (level up)
+    jsr MakeDarkScreen
     jsr NextLevel
+    jsr LevelScreen
     jmp gameloop
 EndOfLife
     dec Lives   ; decrease Lives
@@ -248,6 +273,7 @@ EndOfLife
 gameOver
     ;game over
     jsr HiScoreCheckWrite
+    jsr GameOverScreen
 @   lda RANDOM
     and #$07
     sta COLPM0
@@ -259,6 +285,15 @@ gameOver
 ;--------------------------------------------------
 .proc StartScreen
 ;--------------------------------------------------
+    jsr MakeDarkScreen
+    mwa #dl dlptrs
+    lda #$0 ;+GTIACTLBITS
+;    sta PRIOR
+    sta GPRIOR
+    sta COLBAKS
+    lda #%00110010  ; normal screen width, DL on, P/M off
+    sta dmactls
+    pause 1
     mva #$ff AutoPlay
     sta LevelType   ; Title
     mva #"9" Lives
@@ -314,7 +349,61 @@ level000
     jmp loadNext
 .endp
 
-
+;--------------------------------------------------
+.proc LevelScreen
+;--------------------------------------------------
+    jsr MakeDarkScreen
+    ldx #2
+@   lda LevelNumber,x
+    sec
+    sbc #$20
+    sta LevelText+16,x
+    dex
+    bpl @-
+    mwa #dl_level dlptrs
+    lda #%00110010  ; normal screen width, DL on, P/M off
+    sta dmactls
+    pause 40
+    rts
+.endp
+;--------------------------------------------------
+.proc GameOverScreen
+;--------------------------------------------------
+    jsr MakeDarkScreen
+    ldx #5
+@   lda score,x
+    sta OverText+33,x
+    dex
+    bpl @-
+    mwa #dl_over dlptrs
+    lda #%00110010  ; normal screen width, DL on, P/M off
+    sta dmactls
+    pause 80
+    
+    rts
+.endp
+;--------------------------------------------------
+.proc MainScreen
+;--------------------------------------------------
+    jsr MakeDarkScreen
+    mwa #dl dlptrs
+    lda #$0 ;+GTIACTLBITS
+;    sta PRIOR
+    sta GPRIOR
+    sta COLBAKS
+    lda #%00110010  ; normal screen width, DL on, P/M off
+    sta dmactls
+    pause 1
+    rts
+.endp
+;--------------------------------------------------
+.proc MakeDarkScreen
+;--------------------------------------------------
+    mva #0 dmactls             ; dark screen
+    ; and wait one frame :)
+    pause 1
+    rts
+.endp
 ;--------------------------------------------------
 .proc PlayLevel
 ;--------------------------------------------------
@@ -1172,10 +1261,10 @@ eXistenZstackFill
     ;VBI
     mva #screenWidth/2 racquetPos
     vmain vint,7
-    lda #$0 ;+GTIACTLBITS
+    ;lda #$0 ;+GTIACTLBITS
 ;    sta PRIOR
-    sta GPRIOR
-    sta COLBAKS
+    ;sta GPRIOR
+    ;sta COLBAKS
     
     mva #1 color
 

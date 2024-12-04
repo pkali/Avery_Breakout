@@ -40,8 +40,12 @@ maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
     .zpvar clearCount clearBallNr .byte
     .zpvar DLI_A DLI_X dliCount .byte
     .zpvar AutoPlay .byte   ; Auto Play flag ($80 - auto)
+
+;---------------------------------------------------
     org $2000
 ;---------------------------------------------------
+font
+    ins 'art/Reflections.fnt'
 dl 
     .by SKIP3
     dta MODE2+LMS,a(statusBuffer)
@@ -1183,6 +1187,7 @@ brickcolorTab
 .proc initialize
 ;--------------------------------------------------
      
+    mva #>font CHBAS
     mva #$00 PCOLR0 ; = $02C0 ;- - rejestr-cień COLPM0
 
     jsr cyclecolorsReset

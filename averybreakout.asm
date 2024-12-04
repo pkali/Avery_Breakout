@@ -1210,6 +1210,15 @@ NumberReady
     sta fname+7,x
     dex
     bpl @-
+    ; clear buffer
+    mwa #LevelFileBuff temp
+    ldy #0
+@   tya
+    sta (temp),y
+    inw temp
+    cpw temp #LevelFileBuffEnd
+    bne @-
+    ; try to load file
     jsr close
     jsr open
     bmi open_error
@@ -1366,7 +1375,7 @@ Menu_data
     .byte 155
     .byte 0
 Level000_data
-    .byte '952',155 ; number of bricks (pixes) in ATASCII
+    .byte '100',155   ; '952',155 ; number of bricks (pixes) in ATASCII
     .byte '2',155   ; brick size in pixels
     ;          0         1         2         3
     ;          0123456789012345678901234567890123456789
@@ -1376,6 +1385,7 @@ Level000_data
 LevelFileBuff
 LevelFileBuffLen=(screenWidth*maxLines)+20
     .ds LevelFileBuffLen   ; Buffer for data from the level file
+LevelFileBuffEnd
 LevelNumber
     .byte '000'
 StartLevelNumber

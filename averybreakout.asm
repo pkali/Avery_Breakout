@@ -68,6 +68,11 @@ statusBuffer
 score=statusBuffer+33
 HiScore=statusBuffer+17
 Lives=statusBuffer+8
+
+;--------------------------------------------------
+    icl 'fileio.asm'
+;--------------------------------------------------
+
 ;--------------------------------------------------
 .proc vint
 ;--------------------------------------------------
@@ -1291,7 +1296,8 @@ Level000_data
     :14 .byte '   ##################################',155
     .byte 0
 LevelFileBuff
-    .ds (screenWidth*maxLines)+20   ; Buffer for data from the level file
+LevelFileBuffLen=(screenWidth*maxLines)+20
+    .ds LevelFileBuffLen   ; Buffer for data from the level file
 ;--------------------------------------------------
 BigBrickFlag
     .byte 0

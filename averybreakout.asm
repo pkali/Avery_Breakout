@@ -1633,6 +1633,8 @@ SmallBrick
     lda xpos
     cmp #screenWidth
     bne drawBricksLoop
+    ; if screenwidth is reached we skip all buffer characters up to EOL.
+    jsr skipToEOL
 EndOfLine
     inc ypos
     lda ypos
@@ -1649,6 +1651,17 @@ LevelDataError
     ; errer in data - set level to o (internal) and draw level
     mva #0 LevelType
     jmp level000
+skipToEOL
+    ldy #0
+    lda (inlevel),y
+    beq skipped    ; if end of data
+    inw inlevel
+    cmp #EOL   ; Atari LF
+    beq skipped
+    cmp #LF_PC  ; PC LF
+    bne skipToEOL   ; next data character
+skipped
+    rts
 .endp
 ;--------------------------------------------------
 .proc RmtSongSelect

@@ -363,6 +363,8 @@ gameloop
     jsr MakeDarkScreen
     jsr NextLevel
     jsr LevelScreen
+    ; RMTSong song_ingame
+    jsr AudioInit   ; after I/O
     jmp gameloop
 EndOfLife
     dec Lives   ; decrease Lives
@@ -1262,6 +1264,23 @@ colorCycleTabReset
     .by 14,2,4,6,8,10,12
 brickcolorTab
     .by 0
+    
+;--------------------------------------------------
+.proc AudioInit
+;--------------------------------------------------
+    ; pokeys init
+    lda #3
+    sta skctl ; put Pokey into Init
+    sta skctl+$10
+    ldx #8
+    lda #0
+@   
+      sta $D200,x ; clear all voices, set AUDCTL to 00
+      sta $D210,x ; clear all voices, set AUDCTL to 00
+      dex
+    bpl @-
+    rts
+.endp
 ;--------------------------------------------------
 .proc initialize
 ;--------------------------------------------------
@@ -1276,18 +1295,8 @@ brickcolorTab
     
     lda #$ff
     sta sfx_effect
-     
-    ; pokeys init
-    lda #3
-    sta skctl ; put Pokey into Init
-    sta skctl+$10
-    ldx #8
-    lda #0
-@   
-      sta $D200,x ; clear all voices, set AUDCTL to 00
-      sta $D210,x ; clear all voices, set AUDCTL to 00
-      dex
-    bpl @-
+
+    JSR AudioInit
     
     ;RMT INIT
     ldx #<MODUL                 ;low byte of RMT module to X reg

@@ -3,6 +3,10 @@
 ;CLEAR!
 ;あめでと
 ;---------------------------------------------------
+.IFNDEF TARGET
+    .def TARGET = 800 ; 5200
+.ENDIF
+;---------------------------------------------------
 
          OPT r+  ; saves 10 bytes, and probably works :) https://github.com/tebe6502/Mad-Assembler/issues/10
 
@@ -303,11 +307,11 @@ main
     mva #"9" Lives
     jsr clearscreen
     mva #$0 LevelType
-    jsr initialize.ClearTables
     jsr BuildLevelFromBuffer
     jsr LevelScreen
 gameloop
-    RMTsong song_main_menu
+    jsr initialize.ClearTables
+     RMTsong song_main_menu
     jsr MainScreen
     RMTsong song_ingame
     jsr PlayLevel
@@ -1223,8 +1227,6 @@ brickcolorTab
     mva #>font CHBAS
     mva #$00 PCOLR0 ; = $02C0 ;- - rejestr-cień COLPM0
 
-    jsr cyclecolorsReset
-    
     mva #$7C COLBAKS
     
     mva #0 dliCount
@@ -1247,6 +1249,7 @@ brickcolorTab
     vdli DLI
 
 ClearTables
+    jsr cyclecolorsReset
 
 ; prepare mem address tables (for "snake" routine)
     
@@ -1685,7 +1688,7 @@ LNColtable ; Left Nibble color Table
 debittable
     .byte %00001111
     .byte %11110000
-
+clear_vars_start
 dxTableL    :maxBalls .byte 0
 dxTableH    :maxBalls .byte 0
 dyTableL    :maxBalls .byte 0
@@ -1711,7 +1714,8 @@ xposMemTable
     :maxBalls*maxMemory .byte 0
 yposMemTable
     :maxBalls*maxMemory .byte 0
-;addressess of the tables with 
+clear_vars_end
+;addressess of the tables with snake pixels
 xposMemTableAdrL
     :maxMemory .byte 0
 xposMemTableAdrH
@@ -1734,6 +1738,7 @@ dyDisp
 ballDisp
     dta d"  "
 marginLine :40 .byte 0
+    .ds $400  ; buffer for RMT player
     .align $100
 PLAYER
 ;--------------------------------
@@ -1748,7 +1753,7 @@ song_main_menu  = $00
 song_ingame     = $07
 song_game_over  = $12
 
-    icl 'art/rmtplayr.a65'
+    icl 'art/rmtplayr_modified.asm'
     org $6000
 MODUL
     ins 'art/muzyka.rmt',+6

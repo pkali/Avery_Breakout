@@ -721,4 +721,5 @@ scr32   = @dmactl(narrow|dma|players|missiles|lineX1)
     _F4    = 20
     _space = 33
 .ende
+
 EOL = $9b

@@ -350,6 +350,7 @@ main
     mva #"9" Lives
     jsr clearscreen
     mva #$0 LevelType
+    jsr LoadLevelData.level000  ; set visible number to 000
     jsr BuildLevelFromBuffer
     jsr LevelScreen
     RMTSong song_ingame
@@ -1513,13 +1514,13 @@ bget_error
     beq go_close
 open_error
     mva #0 LevelType    ; set level to internal 000
+level000
     ; reset file number to 000
     ldx #2
 @   lda StartLevelNumber,x
     sta LevelNumber,x
     dex
     bpl @-
-level000
 levelTitle
     rts 
 .endp   

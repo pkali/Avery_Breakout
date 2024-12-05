@@ -341,6 +341,7 @@ main
 ;--------------------------------------------------
     jsr MakeDarkScreen
     jsr initialize
+    RMTsong song_main_menu
     jsr StartScreen
     jsr MakeDarkScreen
     
@@ -351,11 +352,10 @@ main
     mva #$0 LevelType
     jsr BuildLevelFromBuffer
     jsr LevelScreen
+    RMTSong song_ingame
 gameloop
     jsr initialize.ClearTables
-     RMTsong song_main_menu
     jsr MainScreen
-    RMTsong song_ingame
     jsr PlayLevel
     bit EndLevelFlag    ; reason for end level
     bmi EndOfLife   ; end of life :)

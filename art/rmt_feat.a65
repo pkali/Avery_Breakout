@@ -1,10 +1,11 @@
 ;* --------BEGIN--------
-;* Z:\home\pkalinowski\Seafile\atari\projects\Avery_Breakout\art\muzyka_stripped.rmt
+;Settings for music
+;* C:\Users\pawel\Dropbox\programming\tetryx\artwork\stripped.rmt
 FEAT_SFX		equ 1
 FEAT_GLOBALVOLUMEFADE	equ 0		;RMTGLOBALVOLUMEFADE variable
 FEAT_NOSTARTINGSONGLINE	equ 0
 FEAT_INSTRSPEED		equ 1
-FEAT_CONSTANTSPEED		equ 5		;(0 times)
+FEAT_CONSTANTSPEED		equ 0		;(2 times)
 FEAT_COMMAND1		equ 1		;(25 times)
 FEAT_COMMAND2		equ 0		;(0 times)
 FEAT_COMMAND3		equ 0		;(0 times)
@@ -34,8 +35,8 @@ FEAT_TABLETYPE		equ 0		;(0 times)
 FEAT_TABLEMODE		equ 0		;(0 times)
 FEAT_TABLEGO		equ 0		;(0 times)
 FEAT_AUDCTLMANUALSET		equ 0		;(0 times)
-FEAT_VOLUMEMIN		equ 1		;(1 times)
-FEAT_EFFECTVIBRATO		equ 1		;(1 times)
+FEAT_VOLUMEMIN		equ 0		;(0 times)
+FEAT_EFFECTVIBRATO		equ 0		;(0 times)
 FEAT_EFFECTFSHIFT		equ 1		;(1 times)
+STEREOMODE	equ 0
 ;* --------END--------
-

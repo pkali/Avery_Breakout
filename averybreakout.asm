@@ -19,6 +19,7 @@
       lda #:1
       jsr RMTSongSelect
 .endm
+
 ;---------------------------------------------------
     icl 'lib/ATARISYS.ASM'
     icl 'lib/MACRO.ASM'
@@ -59,7 +60,12 @@ maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
 RMT_zpvars = AutoPlay+1  ; POZOR!!! RMT vars go here
 ;---------------------------------------------------
     org $2000
-;---------------------------------------------------
+MODUL
+    ins 'art/muzyka_stripped.rmt',+5
+    .align $100
+    icl 'art/rmtplayr.a65'
+    ;---------------------------------------------------
+    .align $400
 font
     ins 'art/Mild West.fnt'
 dl 
@@ -223,6 +229,8 @@ JNotFire
  
     mva #0 dliCount
     ; mva #13 VSCROL  ; FOX gfx mode only
+
+/*
     bit RMT_blocked
     bmi SkipRMTVBL
     ; ------- RMT -------
@@ -241,6 +249,40 @@ lab2
     jsr RASTERMUSICTRACKER+3    ;1 play
     ; ------- RMT -------
 SkipRMTVBL
+
+*/
+    ;sfx
+    lda sfx_effect
+    bmi lab2
+    asl @                       ; * 2
+    tay                         ;Y = 2,4,..,16  instrument number * 2 (0,2,4,..,126)
+    ldx #3                      ;X = 3          channel (0..3 or 0..7 for stereo module)
+    lda #12                     ;A = 12         note (0..60)
+    jsr RASTERMUSICTRACKER+15   ;RMT_SFX start tone (It works only if FEAT_SFX is enabled !!!)
+;
+    lda #$ff
+    sta sfx_effect              ;reinit value
+;
+lab2
+    /*
+    lda ticksPerSecond
+    cmp #60
+    bne PALMusic
+    ; it is NTSC HERE -- slow down the sound
+    lda ticks
+    and #%00000111
+    beq skipSoundFrame
+PALMusic
+    lda slowMusic
+    beq playNow
+    lda ticks
+    and #%00000011
+    beq skipSoundFrame
+playNow
+    */
+    jsr RASTERMUSICTRACKER+3
+skipSoundFrame
+
     jmp XITVBV
 .endp
 ;--------------------------------------------------
@@ -1236,9 +1278,23 @@ brickcolorTab
     sta sfx_effect
      
     ; pokeys init
-    lda #3        ; stereo (pseudo)
-    sta POKEY+$0f ; stereo
-    sta POKEY+$1f ; stereo
+    lda #3
+    sta skctl ; put Pokey into Init
+    sta skctl+$10
+    ldx #8
+    lda #0
+@   
+      sta $D200,x ; clear all voices, set AUDCTL to 00
+      sta $D210,x ; clear all voices, set AUDCTL to 00
+      dex
+    bpl @-
+    
+    ;RMT INIT
+    ldx #<MODUL                 ;low byte of RMT module to X reg
+    ldy #>MODUL                 ;hi byte of RMT module to Y reg
+    lda #0                      ;starting song line 0-255 to A reg
+    jsr RASTERMUSICTRACKER      ;Init
+    
     
     lda dmactls
     and #$fc
@@ -1740,7 +1796,7 @@ ballDisp
 marginLine :40 .byte 0
     .ds $400  ; buffer for RMT player
     .align $100
-PLAYER
+;PLAYER
 ;--------------------------------
 ; names of RMT instruments (sfx)
 ;--------------------------------
@@ -1753,9 +1809,5 @@ song_main_menu  = $00
 song_ingame     = $07
 song_game_over  = $12
 
-    icl 'art/rmtplayr_modified.asm'
-    org $6000
-MODUL
-    ins 'art/muzyka.rmt',+6
-MODULEND
+
     RUN main

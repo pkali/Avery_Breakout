@@ -4,10 +4,21 @@
 ;あめでと
 ;---------------------------------------------------
 
+         OPT r+  ; saves 10 bytes, and probably works :) https://github.com/tebe6502/Mad-Assembler/issues/10
+
+;---------------------------------------------------
+.macro build
+    dta d"1.00" ; number of this build (4 bytes)
+.endm
+
+.macro RMTSong
+      lda #:1
+      jsr RMTSongSelect
+.endm
+;---------------------------------------------------
     icl 'lib/ATARISYS.ASM'
     icl 'lib/MACRO.ASM'
 
-EOLA    = 155   ; Atari EOL code
 CR_PC   = 13    ; PC CR code
 LF_PC   = 10    ; PC LF code
 display = $a000
@@ -39,8 +50,9 @@ maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
     .zpvar inlevel .word
     .zpvar clearCount clearBallNr .byte
     .zpvar DLI_A DLI_X dliCount .byte
+    .zpvar RMT_blocked noSfx SFX_EFFECT .byte
     .zpvar AutoPlay .byte   ; Auto Play flag ($80 - auto)
-end_of_zpvars
+RMT_zpvars = AutoPlay+1  ; POZOR!!! RMT vars go here
 ;---------------------------------------------------
     org $2000
 ;---------------------------------------------------
@@ -206,7 +218,25 @@ JNotFire
     sta hexDump+1
  
     mva #0 dliCount
-    mva #13 VSCROL
+    ; mva #13 VSCROL  ; FOX gfx mode only
+    bit RMT_blocked
+    bmi SkipRMTVBL
+    ; ------- RMT -------
+    lda sfx_effect
+    bmi lab2
+    asl @                       ; * 2
+    tay                         ;Y = 2,4,..,16  instrument number * 2 (0,2,4,..,126)
+    ldx #0                      ;X = 0          channel (0..3 or 0..7 for stereo module)
+    lda #0                      ;A = 0          note (0..60)
+    bit noSfx
+    smi:jsr RASTERMUSICTRACKER+15   ;RMT_SFX start tone (It works only if FEAT_SFX is enabled !!!)
+
+    lda #$ff
+    sta sfx_effect              ;reinit value
+lab2
+    jsr RASTERMUSICTRACKER+3    ;1 play
+    ; ------- RMT -------
+SkipRMTVBL
     jmp XITVBV
 .endp
 ;--------------------------------------------------
@@ -277,7 +307,9 @@ main
     jsr BuildLevelFromBuffer
     jsr LevelScreen
 gameloop
+    RMTsong song_main_menu
     jsr MainScreen
+    RMTsong song_ingame
     jsr PlayLevel
     bit EndLevelFlag    ; reason for end level
     bmi EndOfLife   ; end of life :)
@@ -295,6 +327,7 @@ EndOfLife
     jmp gameloop
 gameOver
     ;game over
+    RMTSong song_game_over 
     jsr HiScoreCheckWrite
     jsr GameOverScreen
 @   lda RANDOM
@@ -1195,6 +1228,15 @@ brickcolorTab
     mva #$7C COLBAKS
     
     mva #0 dliCount
+    sta RMT_blocked
+    
+    lda #$ff
+    sta sfx_effect
+     
+    ; pokeys init
+    lda #3        ; stereo (pseudo)
+    sta POKEY+$0f ; stereo
+    sta POKEY+$1f ; stereo
     
     lda dmactls
     and #$fc
@@ -1435,7 +1477,7 @@ nextnumber
     inw inlevel
     cmp #CR_PC  ; skip PC CR
     beq nextnumber
-    cmp #EOLA   ; Atari LF
+    cmp #EOL   ; Atari LF
     beq nextnumber2
     cmp #LF_PC  ; PC LF
     beq nextnumber2
@@ -1480,7 +1522,7 @@ singlepixel
     inw inlevel
     cmp #CR_PC  ; skip PC CR
     beq singlepixel
-    cmp #EOLA   ; Atari LF
+    cmp #EOL   ; Atari LF
     beq makeBricks
     cmp #LF_PC  ; PC LF
     bne singlepixel
@@ -1498,7 +1540,7 @@ drawBricksLoop
     inw inlevel
     cmp #CR_PC  ; skip PC CR
     beq drawBricksLoop
-    cmp #EOLA   ; Atari LF
+    cmp #EOL   ; Atari LF
     beq EndOfLine
     cmp #LF_PC  ; PC LF
     beq EndOfLine   ; next line
@@ -1540,33 +1582,50 @@ LevelDataError
     jmp level000
 .endp
 ;--------------------------------------------------
+.proc RmtSongSelect
+;  starting song line 0-255 to A reg
+;--------------------------------------------------
+/*
+    cmp #song_main_menu
+    beq noingame               ; noMusic blocks only ingame songs
+    bit noMusic
+    spl:lda #song_silencio
+noingame
+*/
+    mvx #$ff RMT_blocked
+    ldx #<MODUL                ; low byte of RMT module to X reg
+    ldy #>MODUL                ; hi byte of RMT module to Y reg
+    jsr RASTERMUSICTRACKER     ; Init
+    mva #0 RMT_blocked
+    rts
+.endp
 ;--------------------------------------------------
 Menu_data
-    .byte '200',EOLA ; number of bricks in ATASCII
-    .byte '1',EOLA   ; brick size in pixels
+    .byte '200',EOL ; number of bricks in ATASCII
+    .byte '1',EOL   ; brick size in pixels
     ;      0         1         2         3         4         5         6         7            
     ;      01234567890123456789012345678901234567890123456789012345678901234567890123456789
-    .byte EOLA
-    .byte '                   ####    ##    ##  #######  ######    ##    ##',EOLA
-    .byte '                  ######   ##    ##  ##       ##   ##    ##  ##',EOLA
-    .byte '                 ##    ##   ##  ##   #####    ######      ####',EOLA
-    .byte '                 ########    ####    ##       ##  ##       ##',EOLA
-    .byte '                 ##    ##     ##     #######  ##   ##      ##',EOLA
-    .byte EOLA
-    .byte '   #####    ######   #######    ####    ##    ##   ######   ##    ##  ########',EOLA
-    .byte '   ##  ##   ##   ##  ##        ######   ##  ##    ##    ##  ##    ##     ##',EOLA
-    .byte '   #####    ######   #####    ##    ##  ####      ##    ##  ##    ##     ##',EOLA
-    .byte '   ##   ##  ##  ##   ##       ########  ##  ##    ##    ##  ##    ##     ##',EOLA
-    .byte '   ######   ##   ##  #######  ##    ##  ##    ##   ######    ######      ##',EOLA
-    .byte EOLA
+    .byte EOL
+    .byte '                   ####    ##    ##  #######  ######    ##    ##',EOL
+    .byte '                  ######   ##    ##  ##       ##   ##    ##  ##',EOL
+    .byte '                 ##    ##   ##  ##   #####    ######      ####',EOL
+    .byte '                 ########    ####    ##       ##  ##       ##',EOL
+    .byte '                 ##    ##     ##     #######  ##   ##      ##',EOL
+    .byte EOL
+    .byte '   #####    ######   #######    ####    ##    ##   ######   ##    ##  ########',EOL
+    .byte '   ##  ##   ##   ##  ##        ######   ##  ##    ##    ##  ##    ##     ##',EOL
+    .byte '   #####    ######   #####    ##    ##  ####      ##    ##  ##    ##     ##',EOL
+    .byte '   ##   ##  ##  ##   ##       ########  ##  ##    ##    ##  ##    ##     ##',EOL
+    .byte '   ######   ##   ##  #######  ##    ##  ##    ##   ######    ######      ##',EOL
+    .byte EOL
     .byte 0
 Level000_data
-    .byte '100',EOLA   ; '952',EOLA ; number of bricks (pixes) in ATASCII
-    .byte '2',EOLA   ; brick size in pixels
+    .byte '100',EOL   ; '952',EOL ; number of bricks (pixes) in ATASCII
+    .byte '2',EOL   ; brick size in pixels
     ;          0         1         2         3
     ;          0123456789012345678901234567890123456789
-    .byte EOLA,EOLA,EOLA
-    :14 .byte '   ##################################',EOLA
+    .byte EOL,EOL,EOL
+    :14 .byte '   ##################################',EOL
     .byte 0
 LevelFileBuff
 LevelFileBuffLen=(screenWidth*maxLines)+20
@@ -1577,7 +1636,7 @@ LevelNumber
 StartLevelNumber
     .byte '000'
 fname
-    .byte 'D:LEVEL000.DAT',EOLA
+    .byte 'D:LEVEL000.DAT',EOL
 ;--------------------------------------------------
 EndLevelFlag
     .byte 0 ; $ff - level over, $00 - level ended
@@ -1675,5 +1734,23 @@ dyDisp
 ballDisp
     dta d"  "
 marginLine :40 .byte 0
+    .align $100
+PLAYER
+;--------------------------------
+; names of RMT instruments (sfx)
+;--------------------------------
+sfx_ping = $07
+sfx_pong = $08
+;--------------------------------
+; RMT songs (lines)
+;--------------------------------
+song_main_menu  = $00
+song_ingame     = $07
+song_game_over  = $12
 
+    icl 'art/rmtplayr.a65'
+    org $6000
+MODUL
+    ins 'art/muzyka.rmt',+6
+MODULEND
     RUN main

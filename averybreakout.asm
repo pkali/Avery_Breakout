@@ -43,12 +43,11 @@ maxMemory = 7      ; number of saved pixel positions
 maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
 
     .zpvar xpos ypos .word = $80 ; position of the ball
-    .zpvar color .byte ; color of the pixel to plot
     .zpvar deXpos deYpos .byte ;position for deletion
-    .zpvar dX dY .word ;main loop shortcuts to the table values 
-    ;.zpvar dx dy .word ;delta
+    .zpvar dX dY .word ;main loop shortcuts to the table values of delta 
     ;xpos, dx - "static point precision" - [dx+1].[dx] (big endian!)
     ;this static point precision is emulated with .word calcs, just a result is the high byte
+    .zpvar color .byte ; color of the pixel to plot
     .zpvar currBall collisionCheck racquetPos MyClok eXistenZstackPtr .byte
     .zpvar xMemAddr yMemAddr .word ; address where to store memories of the current ball
     .zpvar temp .word
@@ -61,13 +60,13 @@ RMT_zpvars = AutoPlay+1  ; POZOR!!! RMT vars go here
 ;---------------------------------------------------
     org $2000
 MODUL
-    ins 'art/muzyka_stripped.rmt',+5
+    ins 'art/muzyka_stripped.rmt',+5  ; my RMT 1.28 on WINE is apparently broken. I lost some hair here (5, not 6)
     .align $100
     icl 'art/rmtplayr.a65'
     ;---------------------------------------------------
     .align $400
 font
-    ins 'art/Mild West.fnt'
+    ins 'art/Mild West.fnt'  ; https://damieng.com/typography/zx-origins/mild-west/
 dl 
     .by SKIP3
     dta MODE2+LMS,a(statusBuffer)
@@ -87,13 +86,13 @@ DLracquetAddr0
     .wo dl
 ;---------------------------------------------------
 dl_level 
-    .by SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8
+    :8 .by SKIP8
     dta 6+LMS,a(LevelText)
     .by JVB
     .wo dl_level
 ;---------------------------------------------------
 dl_start
-    .by SKIP3,SKIP8,SKIP8
+    :6 .by SKIP3
     dta 6+LMS,a(StartText)
     dta 6,SKIP4
     dta 6,SKIP8,SKIP8
@@ -108,7 +107,7 @@ dl_start
     .wo dl_start
 ;---------------------------------------------------
 dl_over 
-    .by SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8,SKIP8
+    :8 .by SKIP8
     dta 6+LMS,a(OverText)
     .by SKIP8
     dta 6
@@ -123,9 +122,9 @@ racquetDisp
 ;--------------------------------------------------
 statusBuffer
     dta d" Lives: 5    HS: 000000   Score: 000000 "
-score=statusBuffer+33
-HiScore=statusBuffer+17
-Lives=statusBuffer+8
+score   = statusBuffer+33
+HiScore = statusBuffer+17
+Lives   = statusBuffer+8
 LevelText
     dta d" entering level 000 "
 OverText
@@ -133,7 +132,7 @@ OverText
     dta d" YOUR SCORE: 000000 "
 StartText
     dta d"                   ,"
-    dta d"GAME BY PIRX & PECUS"
+    dta d"GAME by PIRX & PECUS"
     dta d"   MUSIC by ALEX    "
     dta d"press start to START"
 ;--------------------------------------------------
@@ -193,7 +192,7 @@ JNotFire
     and #$01
     ;sta HSCROL
     
-  ;pos print
+/*  ;pos print
     lda racquetPos
     :4 lsr
     clc
@@ -205,7 +204,8 @@ JNotFire
     clc
     adc #'0'
     sta hexDump+1
- 
+*/ 
+
     mva #0 dliCount
     ; mva #13 VSCROL  ; FOX gfx mode only
 
@@ -278,7 +278,6 @@ skipSoundFrame
 	rti
 */
     sta DLI_A
-    ;stx DLI_X
     mva #$80 PRIOR
 
     lda VCOUNT
@@ -1253,10 +1252,7 @@ brickcolorTab
     jsr RASTERMUSICTRACKER      ;Init
     
     
-    lda dmactls
-    and #$fc
-    ora #$02     ; normal screen width
-    ;ora #$01     ; narrow screen width
+    lda #@dmactl(standard|dma)
     sta dmactls
     mwa #dl dlptrs
     vdli DLI
@@ -1689,18 +1685,17 @@ Numbers
     .byte '0123456789'
 lineAdrL
     :margin .byte <marginLine ;8 lines of margin space
-    :maxLines .byte <(display+40*#)
-    ;:margin .byte <marginLine ;8 lines of margin space
-    :256-maxLines-1*margin .by <marginLine; (display+40*#) ;just to let the plot smear on full .byte ypos
+    :maxLines .byte <(display+screenBytes*#)
+    :256-maxLines-1*margin .by <marginLine  ; (display+40*#) ;just to let the plot smear on full .byte ypos
 lineAdrH
     :margin .byte >marginLine
-    :maxLines .byte >(display+40*#)
-    ;:margin .byte >marginLine
-    :256-maxLines-1*margin .by >marginLine; (display+40*#) ;just to let the plot smear on full .byte ypos
-    ; $E000 is an address in ROM - the trick to avoid spawning new balls!    
+    :maxLines .byte >(display+screenBytes*#)
+    :256-maxLines-1*margin .by >marginLine  ; (display+40*#) ;just to let the plot smear on full .byte ypos
 bittable
     .byte %11110000
+debittable
     .byte %00001111
+    .byte %11110000
 RNColtable ; Right Nibble color Table
     .byte %00000000
     .byte %00000001
@@ -1721,9 +1716,7 @@ LNColtable ; Left Nibble color Table
     .byte %01100000
     .byte %01110000
     .byte %10000000
-debittable
-    .byte %00001111
-    .byte %11110000
+;--------------------------------
 clear_vars_start
 dxTableL    :maxBalls .byte 0
 dxTableH    :maxBalls .byte 0
@@ -1750,7 +1743,6 @@ xposMemTable
     :maxBalls*maxMemory .byte 0
 yposMemTable
     :maxBalls*maxMemory .byte 0
-clear_vars_end
 ;addressess of the tables with snake pixels
 xposMemTableAdrL
     :maxMemory .byte 0
@@ -1763,6 +1755,8 @@ yposMemTableAdrH
 ;table for keeping the count on the last position to be deleted from the "snake"
 memCycleTable
     :maxBalls .byte 0
+clear_vars_end
+;--------------------------------
 statusBar
     dta d"rc$"
 hexDump
@@ -1773,10 +1767,7 @@ dyDisp
     dta d"   balls$"
 ballDisp
     dta d"  "
-marginLine :40 .byte 0
-    .ds $400  ; buffer for RMT player
-    .align $100
-;PLAYER
+marginLine  .ds screenBytes
 ;--------------------------------
 ; names of RMT instruments (sfx)
 ;--------------------------------

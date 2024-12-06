@@ -12,7 +12,7 @@
     sta ICBAL,x
     lda #>fname
     sta ICBAH,x
-    lda #04            ;kod dostępu: $04 odczyt, $08 zapis, $09 dopisywanie, $0c odczyt/zapis
+    lda #04             ;kod dostępu: $04 odczyt, $08 zapis, $09 dopisywanie, $0c odczyt/zapis
     sta ICAX1,x
     lda #$00            ;dodatkowy parametr, $00 jest zawsze dobre
     sta ICAX2,x 

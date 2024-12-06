@@ -146,29 +146,8 @@ StartText
     ;------------JOY-------------
     ;happy happy joy joy
     ;check for joystick now
-/*
-    inc MyClok
-    lda MyClok
-    and #$07
-    bne jNotRight
-*/    
+
     ldy PORTA
-/*
-    tya
-    and #$01 ;up
-    bne jNotUp
-    ldx joystickConversion ;up
-    lda #1
-    sta keyboardGrid,x
-jNotUp
-    tya
-    and #$02 ;down
-    bne jNotDown
-    ldx joystickConversion+1 ;up
-    lda #1
-    sta keyboardGrid,x
-jNotDown
-*/
     tya
     and #$04 ;left
     bne jNotLeft
@@ -254,7 +233,7 @@ SkipRMTVBL
     ;sfx
     lda sfx_effect
     bmi lab2
-    asl @                       ; * 2
+    asl                         ; * 2
     tay                         ;Y = 2,4,..,16  instrument number * 2 (0,2,4,..,126)
     ldx #3                      ;X = 3          channel (0..3 or 0..7 for stereo module)
     lda #12                     ;A = 12         note (0..60)
@@ -264,22 +243,6 @@ SkipRMTVBL
     sta sfx_effect              ;reinit value
 ;
 lab2
-    /*
-    lda ticksPerSecond
-    cmp #60
-    bne PALMusic
-    ; it is NTSC HERE -- slow down the sound
-    lda ticks
-    and #%00000111
-    beq skipSoundFrame
-PALMusic
-    lda slowMusic
-    beq playNow
-    lda ticks
-    and #%00000011
-    beq skipSoundFrame
-playNow
-    */
     jsr RASTERMUSICTRACKER+3
 skipSoundFrame
 
@@ -318,27 +281,19 @@ skipSoundFrame
     ;stx DLI_X
     mva #$80 PRIOR
 
-    ;ldx dliCount
-
-    ;txa
-    ;asl
-    ;asl 
-    ;lda brickcolorTab,x
     lda VCOUNT
     asl 
     asl
     sta WSYNC
     sta COLBAK
     
-    ;inx
-    ;stx dliCount
-    ;ldx DLI_X
     lda DLI_A
     rti
 .endp
 ;--------------------------------------------------
 main
 ;--------------------------------------------------
+    jsr wait_for_depress
     jsr MakeDarkScreen
     jsr initialize
     RMTsong song_main_menu
@@ -347,7 +302,7 @@ main
     
     mva #$0 AutoPlay    
     jsr ScoreClear
-    mva #"9" Lives
+    mva #"1" Lives
     jsr clearscreen
     mva #$0 LevelType
     jsr LoadLevelData.level000  ; set visible number to 000
@@ -383,10 +338,10 @@ gameOver
     and #%00001110
     sta COLPF0
     lda CONSOL
-    and #%00000010 ; SELECT
+    and #@consol(start) ; START
     beq main
     lda TRIG0   ; fire
-    beq main
+    jeq main
     jmp @-
 
 ;--------------------------------------------------
@@ -400,10 +355,9 @@ gameOver
     jsr BuildLevelFromBuffer
     mwa #dl_start dlptrs
     lda #$0 ;+GTIACTLBITS
-;    sta PRIOR
     sta GPRIOR
     sta COLBAKS
-    lda #%00110010  ; normal screen width, DL on, P/M off
+    lda #@dmactl(standard|dma) ; normal screen width, DL on, P/M off
     sta dmactls
     pause 1
 StartLoop
@@ -461,14 +415,14 @@ level000
 ;--------------------------------------------------
     jsr MakeDarkScreen
     ldx #2
-@   lda LevelNumber,x
-    sec
-    sbc #$20
-    sta LevelText+16,x
-    dex
+@     lda LevelNumber,x
+      sec
+      sbc #$20
+      sta LevelText+16,x
+      dex
     bpl @-
     mwa #dl_level dlptrs
-    lda #%00110010  ; normal screen width, DL on, P/M off
+    lda #@dmactl(standard|dma)  ; normal screen width, DL on, P/M off
     sta dmactls
     pause 80
     rts
@@ -478,9 +432,9 @@ level000
 ;--------------------------------------------------
     jsr MakeDarkScreen
     ldx #5
-@   lda score,x
-    sta OverText+33,x
-    dex
+@     lda score,x
+      sta OverText+33,x
+      dex
     bpl @-
     mwa #dl_over dlptrs
     lda #%00110010  ; normal screen width, DL on, P/M off
@@ -495,10 +449,9 @@ level000
     jsr MakeDarkScreen
     mwa #dl dlptrs
     lda #$0 ;+GTIACTLBITS
-;    sta PRIOR
     sta GPRIOR
     sta COLBAKS
-    lda #%00110010  ; normal screen width, DL on, P/M off
+    lda #@dmactl(standard|dma)  ; normal screen width, DL on, P/M off
     sta dmactls
     pause 1
     rts
@@ -624,7 +577,7 @@ noTop
     bit AutoPlay
     bmi GoAuto
     lda CONSOL
-    and #%00000100 ; OPTION
+    and #@consol(option) ; OPTION
     bne bounceNormally
 GoAuto
 	jmp bottomBounce ; turns off the ball kill
@@ -844,7 +797,7 @@ NoScoreUp
     ora BricksInLevel+1
     bne NoLevelEnd
     ; all bricks gone - level ended!
-        jmp GoNextLevel
+    jmp GoNextLevel
 NoLevelEnd
     ;spawn the new bally
     ; if there is still an empty slot for a new ball somewhere...
@@ -904,14 +857,6 @@ dXlower
     sta dyTableL,x
  
 
-
-    ; sound
-    ;lda random
-    ;and #%00001000
-    ;lda #%00000000
-    ;sta consol
-
-
 noCollision
 noMoreSlots
 
@@ -954,7 +899,6 @@ flightLoopEnd
 
 
 endOfBallzLoop
-    ;pause
        
     dec currBall
     jpl flight
@@ -965,8 +909,10 @@ endOfBallzLoop
     bpl NoAuto
     pause 1 ;additional pause if auto play mode (slower)
     lda CONSOL
-    and #%00000001 ; START
+    and #@consol(start) ; START
     beq LevelOver   ; Start pressed in Auto Play - exit
+    lda TRIG0
+    beq LevelOver
     
 NoAuto
     lda eXistenZstackPtr
@@ -975,6 +921,7 @@ NoAuto
 LevelOver
     ; level over
     mva #$ff EndLevelFlag
+    jsr wait_for_depress
     rts
     
 
@@ -1679,6 +1626,16 @@ noingame
     ldy #>MODUL                ; hi byte of RMT module to Y reg
     jsr RASTERMUSICTRACKER     ; Init
     mva #0 RMT_blocked
+    rts
+.endp
+;--------------------------------------------------
+.proc wait_for_depress  ; ion
+;--------------------------------------------------
+    lda CONSOL
+    and:cmp #%00000111
+    bne wait_for_depress
+    lda TRIG0
+    beq wait_for_depress
     rts
 .endp
 ;--------------------------------------------------

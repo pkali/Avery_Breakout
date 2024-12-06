@@ -302,7 +302,7 @@ main
     
     mva #$0 AutoPlay    
     jsr ScoreClear
-    mva #"1" Lives
+    mva #"5" Lives
     jsr clearscreen
     mva #$0 LevelType
     jsr LoadLevelData.level000  ; set visible number to 000
@@ -1387,8 +1387,8 @@ drawBricksLoop
     lda #1
     sta balleXistenZ,x
 
-    ;randomize margin $ff-margin
-    lda #40
+    randomize 10 70
+    ;lda #40
     sta xposTableH,x
     ;randomize margin*2+maxBrickLines maxLines-margin*4
     lda #50

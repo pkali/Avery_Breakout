@@ -1616,7 +1616,7 @@ noingame
 .endp
 ;--------------------------------------------------
 Menu_data
-    .byte '200',EOL ; number of bricks in ATASCII
+    .byte '200',EOL ; number of bricks in ATASCII before success
     .byte '1',EOL   ; brick size in pixels
     ;      0         1         2         3         4         5         6         7            
     ;      01234567890123456789012345678901234567890123456789012345678901234567890123456789
@@ -1635,12 +1635,12 @@ Menu_data
     .byte EOL
     .byte 0
 Level000_data
-    .byte '100',EOL   ; '952',EOL ; number of bricks (pixes) in ATASCII
+    .byte '486',EOL   ; '952',EOL ; number of bricks (pixes) in ATASCII to be taken out before success
     .byte '2',EOL   ; brick size in pixels
     ;          0         1         2         3
     ;          0123456789012345678901234567890123456789
     .byte EOL,EOL,EOL
-    :14 .byte '   ## ## ## ## ######################',EOL
+    :14 .byte '   ##################################',EOL
     .byte 0
 LevelFileBuff
 LevelFileBuffLen=(screenWidth*maxLines)+20

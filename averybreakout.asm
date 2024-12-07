@@ -1259,6 +1259,15 @@ brickcolorTab
 
 ClearTables
     jsr cyclecolorsReset
+    mwa #clear_vars_start temp
+    ldy #0
+@
+    tya
+    sta (temp),y
+    inw temp
+    cpw temp #clear_vars_end
+    bne @-
+
 
 ; prepare mem address tables (for "snake" routine)
     
@@ -1288,31 +1297,8 @@ initLoop1
     inx
     cpx #maxMemory-1
     bne initLoop1
-    ;snake memory addressess initialized!
-    ;clear the balleXistenZ (nothing is bouncing!)
-    ;and other tables
-    ldx #0
-    txa
-eXistenZclearLoop
-    sta balleXistenZ,x
-    sta dxTableL,x
-    sta dxTableH,x
-    sta dyTableL,x
-    sta dyTableH,x
-    sta xposTableL,x
-    sta xposTableH,x
-    sta yposTableL,x
-    sta yposTableH,x
-    sta memCycleTable,x
 
-    inx
-    cpx #maxBalls
-    bne eXistenZclearLoop
-    sta balleXistenZcatch    
-
-
-    dex
-    ; X == maxBalls-1
+    ldx #maxBalls-1
     txa
 eXistenZstackFill
     sta eXistenZstack+1,x
@@ -1340,10 +1326,6 @@ eXistenZstackFill
     ;VBI
     mva #screenWidth/2 racquetPos
     vmain vint,7
-    ;lda #$0 ;+GTIACTLBITS
-;    sta PRIOR
-    ;sta GPRIOR
-    ;sta COLBAKS
     
     mva #1 color
 

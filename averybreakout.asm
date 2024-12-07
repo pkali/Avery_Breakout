@@ -1640,7 +1640,7 @@ Level000_data
     ;          0         1         2         3
     ;          0123456789012345678901234567890123456789
     .byte EOL,EOL,EOL
-    :14 .byte '   ##################################',EOL
+    :14 .byte '   ## ## ## ## ######################',EOL
     .byte 0
 LevelFileBuff
 LevelFileBuffLen=(screenWidth*maxLines)+20

@@ -24,8 +24,6 @@
     icl 'lib/ATARISYS.ASM'
     icl 'lib/MACRO.ASM'
 
-CR_PC   = 13    ; PC CR code
-LF_PC   = 10    ; PC LF code
 display = $a000
 screenWidth = 80   ;in pixels
 screenBytes = screenWidth/2   ; in bytes
@@ -1324,7 +1322,7 @@ eXistenZstackFill
                     ;previously the whole band of ballz
                     
     ;VBI
-    mva #screenWidth/2 racquetPos
+    mva #screenWidth/2-racquetSize/4 racquetPos
     vmain vint,7
     
     mva #1 color

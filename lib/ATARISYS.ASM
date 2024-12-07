@@ -734,3 +734,5 @@ scr32   = @dmactl(narrow|dma|players|missiles|lineX1)
 ; ---------------------------------------------------------------------------
 
 EOL = $9b
+CR_PC   = 13    ; PC CR code
+LF_PC   = 10    ; PC LF code

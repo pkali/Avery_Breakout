@@ -49,6 +49,7 @@ maxBrickLines = 14 ; maximum number of lines of bricks to be eradicated
     .zpvar currBall collisionCheck racquetPos MyClok eXistenZstackPtr .byte
     .zpvar xMemAddr yMemAddr .word ; address where to store memories of the current ball
     .zpvar temp .word
+    .zpvar displayposition .word
     .zpvar inlevel .word
     .zpvar clearCount clearBallNr .byte
     .zpvar DLI_A DLI_X dliCount .byte
@@ -86,6 +87,8 @@ DLracquetAddr0
 dl_level 
     :8 .by SKIP8
     dta 6+LMS,a(LevelText)
+    dta SKIP8
+    dta 6,SKIP4,6
     .by JVB
     .wo dl_level
 ;---------------------------------------------------
@@ -125,6 +128,8 @@ HiScore = statusBuffer+17
 Lives   = statusBuffer+8
 LevelText
     dta d" entering level 000 "
+    dta d"  HIT       OUT OF  "
+    dta d"          BLOCKS    "
 OverText
     dta d"     GAME OVER      "
     dta d" YOUR SCORE: 000000 "
@@ -133,6 +138,8 @@ StartText
     dta d"GAME by PIRX & PECUS"
     dta d"   MUSIC by ALEX    "
     dta d"press start to START"
+BlocksToHit=LevelText+26
+AllBlocks=LevelText+44
 ;--------------------------------------------------
     icl 'fileio.asm'
 ;--------------------------------------------------
@@ -421,7 +428,7 @@ level000
     mwa #dl_level dlptrs
     lda #@dmactl(standard|dma)  ; normal screen width, DL on, P/M off
     sta dmactls
-    pause 80
+    pause 100
     rts
 .endp
 ;--------------------------------------------------
@@ -1520,7 +1527,7 @@ singlepixel
     bne singlepixel
 ; make bricks
 makeBricks
-    mwa #0 temp
+    mwa #0 temp2
     mva #margin*2 ypos
 drawBricksLoopY
     mva #0 xpos
@@ -1539,10 +1546,10 @@ drawBricksLoop
     cmp #' '
     beq NoBrick     ; if no brick
     ldy #8
-    inw temp    ; real number of bricks
+    inw temp2    ; real number of bricks
     bit BigBrickFlag
     bpl OnePixel
-    inw temp    ; real number of bricks
+    inw temp2    ; real number of bricks
 OnePixel
 NoBrick
     sty color
@@ -1564,10 +1571,16 @@ EndOfLine
     cmp #maxlines
     bne drawBricksLoopY    
 LevelDataEnd
-    cpw BricksInLevel temp
+    cpw BricksInLevel temp2
     bcc BricksOK    ; if defined bricks number is bigger tan real
-    mwa temp BricksInLevel  ; set to real brick number
+    mwa temp2 BricksInLevel  ; set to real brick number
 BricksOK
+    mwa #AllBlocks displayposition
+    mwa temp2 decimal
+    jsr displaydec5
+    mwa #BlocksToHit displayposition
+    mwa BricksInLevel decimal
+    jsr displaydec5
     jsr cyclecolorsReset
     rts
 LevelDataError
@@ -1584,6 +1597,62 @@ skipToEOL
     cmp #LF_PC  ; PC LF
     bne skipToEOL   ; next data character
 skipped
+    rts
+.endp
+;--------------------------------------------------
+.proc displaydec5 ;decimal (word), displayposition  (word)
+;--------------------------------------------------
+; displays decimal number as in parameters (in text mode)
+; leading zeroes are removed
+; the range is (00000..65565 - two bytes)
+
+    ldy #4  ; there will be 5 digits
+NextDigit
+    ldx #16 ; 16-bit dividee so Rotate 16 times
+    lda #$00
+Rotate000
+    aslw decimal
+    rol  ; scroll dividee
+    ; (as highest byte - additional - byte is A)
+    cmp #10  ; divider
+    bcc TooLittle000 ; if A is smaller than divider
+    ; there is nothing to substract
+    sbc #10  ; divider
+    inc decimal     ; lowest bit set to 1
+    ; because it is 0 and this is the fastest way
+TooLittle000 dex
+    bne Rotate000 ; and Rotate 16 times, Result will be in decimal
+    tax  ; and the rest in A
+    ; (and it goes to X because
+    ; it is our decimal digit)
+    lda digits,x
+    sta decimalresult,y
+    dey
+    bpl NextDigit ; Result again /10 and we have next digit
+
+;rightnumber
+    ; displaying without leading zeroes (if zeroes exist then display space at this position)
+    ldy #0
+    ldx #0    ; digit flag (cut leading zeroes)
+displayloop
+    lda decimalresult,y
+    cpx #0
+    bne noleading0
+    cpy #4
+    beq noleading0    ; if 00000 - last 0 must stay
+    cmp zero
+    bne noleading0
+    lda #space
+    beq displaychar    ; space = 0 !
+noleading0
+    inx        ; set flag (no leading zeroes to cut)
+displaychar
+    sta (displayposition),y
+nexdigit
+    iny
+    cpy #5
+    bne displayloop
+
     rts
 .endp
 ;--------------------------------------------------
@@ -1659,10 +1728,21 @@ BigBrickFlag
     .byte 0
 BricksInLevel
     .word 0
+temp2
+    .word 0
 LevelType
     .byte 0 ; level type $00 - first level, $01 - level from buffer, $ff - title screen  
 Numbers
     .byte '0123456789'
+digits
+zero
+    .byte "0123456789"
+space = 0
+    .byte " "
+decimal
+    .word 0
+decimalresult
+    .byte "     "
 lineAdrL
     :margin .byte <marginLine ;8 lines of margin space
     :maxLines .byte <(display+screenBytes*#)

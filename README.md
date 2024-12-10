@@ -8,19 +8,28 @@ I have shown engine protos before, but it was not a real game, just a few bounci
 
 Music and SFX by Alex, his first RMT attempt :)
 
+Font by DamienG: https://damieng.com/typography/zx-origins/mild-west/
+
 
 The `backup` folder contains easier to play hi-res, b-w version. 
 
 
 
+2024-12-07
+We teamed with Pecus and Alex and made a game out of the "tech demo". There are points, game over screen and possibility to add your own levels.
+If there is no DOS, you can play the single built-in level.
+With DOS, the game tries to load `LEVELnnn.DAT` file, starting from `LEVEL001.DAT` from the current directory.
+The levels can be edited on Atari with the enclosed `ED.COM` editor or a PC (end line characters can be CR, LF, CRFL or ATASCII EOL).
 
+Level file format:
+line 1: number of balls to be hit for the level to succeed
+line 2: `1` means single pixel width of the pattern, `2` double pixel width
+the following lines define the level. Any character is a pixel, space is a space, EOL is the end of line.
 
-T021: balls are ferking stick to the right part of the screen...
-T023: find and set few nice starting points and speeds to be rotated (remove not really sexy random start)
-T025: do nice game over (when not clear)
-T026: do nice "ALL CLEAR" screen
+The game displays 46 lines of pixels, but your levels should generally be shorter to make it playable.
 
-T028: (idea) spinning the ball - when ball bounces the racquette when it is moving, dX adds or subs
+Experiment!
+
 
 2020-05-13
 Second place in the game compo in PSA 2020 virtual SARS-2 demo party.
@@ -114,3 +123,13 @@ First try:
 Strip scorch sources to get clean gr.8 screen.
 (and PLOT)
 Basic idea: http://wonderfl.net/c/tNGi/fullscreen
+
+
+TODO: (old)
+
+T021: balls are ferking stick to the right part of the screen...
+T023: find and set few nice starting points and speeds to be rotated (remove not really sexy random start)
+T025: do nice game over (when not clear)
+T026: do nice "ALL CLEAR" screen
+
+T028: (idea) spinning the ball - when ball bounces the racquette when it is moving, dX adds or subs

@@ -642,6 +642,9 @@ bottomBounce
     ; sbw #$ffff dy dy ;this does not compile :(
     negw dY
     mva #maxLines+margin-2 ypos+1
+    
+    mva #sfx_ping sfx_effect
+    
 
 
 noBottom
@@ -860,6 +863,8 @@ dXlower
     lda random
     sta dyTableL,x
  
+    ;pong
+    mva #sfx_pong sfx_effect
 
 noCollision
 noMoreSlots

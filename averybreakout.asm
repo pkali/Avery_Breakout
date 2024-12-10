@@ -642,9 +642,10 @@ bottomBounce
     ; sbw #$ffff dy dy ;this does not compile :(
     negw dY
     mva #maxLines+margin-2 ypos+1
-    
+    bit LevelType
+    bmi noPingSFX   ; no SFX on title screen
     mva #sfx_ping sfx_effect
-    
+noPingSFX    
 
 
 noBottom
@@ -864,8 +865,10 @@ dXlower
     sta dyTableL,x
  
     ;pong
+    bit LevelType
+    bmi noPongSFX   ; no SFX on title screen
     mva #sfx_pong sfx_effect
-
+noPongSFX
 noCollision
 noMoreSlots
 

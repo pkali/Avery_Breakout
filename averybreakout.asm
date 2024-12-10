@@ -1065,6 +1065,17 @@ clearDeadLoop
     lda #"0"    ; 0 character code
     sta score+3
     inc score+2
+    ; bonus !!! :)
+    lda Lives
+    cmp #"9"
+    beq noLivesUP
+    inc Lives
+    mva #05 sfx_effect
+    mva #$ff COLBAKS
+    pause 2 ; sorry
+    inc COLBAKS
+noLivesUP
+    ;----------
     lda score+2
     cmp #"9"+1  ; 9+1 character code
     bne ScoreReady

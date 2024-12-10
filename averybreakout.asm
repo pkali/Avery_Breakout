@@ -179,7 +179,7 @@ jNotRight
 JNotFire
 */
   
-    lda racquetPos
+    ;lda racquetPos
 
     sec
     lda #screenWidth-1
@@ -331,7 +331,7 @@ EndOfLife
     lda Lives
     cmp #"0"
     beq gameOver    ; if no lives - game over
-    jsr NextLive
+    jsr NextLife
     jmp gameloop
 gameOver
     ;game over
@@ -375,7 +375,7 @@ EndOfStartScreen
     rts
 .endp
 ;--------------------------------------------------
-.proc NextLive
+.proc NextLife
 ;--------------------------------------------------
     ldy #maxBalls
     sty eXistenZstackPtr
@@ -1246,7 +1246,9 @@ brickcolorTab
     mva #$00 PCOLR0 ; = $02C0 ;- - rejestr-cień COLPM0
 
     mva #$7C COLBAKS
-    
+
+    mva #screenWidth/2-racquetSize/4 racquetPos    
+
     mva #0 dliCount
     sta RMT_blocked
     
@@ -1334,7 +1336,7 @@ eXistenZstackFill
                     ;previously the whole band of ballz
                     
     ;VBI
-    mva #screenWidth/2-racquetSize/4 racquetPos
+
     vmain vint,7
     
     mva #1 color
@@ -1375,16 +1377,24 @@ drawBricksLoop
     lda #1
     sta balleXistenZ,x
 
-    randomize 10 70
-    ;lda #40
+    ;randomize 10 70
+    lda racquetPos
+    adc #2  ; do not care about curry, just move the baby to the right
     sta xposTableH,x
     ;randomize margin*2+maxBrickLines maxLines-margin*4
-    lda #50
+    lda #54
     sta yposTableH,x
 
 ; random initial speed and direction
     ;randomize 0 maxSpeed-1
+    lda random
+    and #%1
+    beq xneg
     lda #1 ;easy start
+    bne @+ ; jmp
+xneg
+    lda #-1
+@ 
     sta dxTableH,x
     lda random
     sta dxTableL,x

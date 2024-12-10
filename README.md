@@ -22,7 +22,7 @@ If there is no DOS, you can play the single built-in level.
 
 With DOS, the game tries to load `LEVELnnn.DAT` file, starting from `LEVEL001.DAT` from the current directory.
 
-The levels can be edited on Atari with the enclosed `ED.COM` editor or a PC (end line characters can be CR, LF, CRFL or ATASCII EOL).
+The levels can be edited on Atari with the enclosed `ED.COM` editor or a PC (end line characters can be LF, CRFL or ATASCII EOL).
 
 ### Level file format:
 line 1: number of balls to be hit for the level to succeed
@@ -32,6 +32,9 @@ line 2: `1` means single pixel width of the pattern, `2` double pixel width
 the following lines define the level. Any character is a pixel, space is a space, EOL is the end of line.
 
 The game displays 46 lines of pixels, but your levels should generally be shorter to make it playable.
+
+Important! Any error in the level definition causes the game to return to level 000, so if you make a mistake in `LEVEL004.DAT`,
+the files `LEVEL005.DAT` and `LEVEL006.DAT` will never be displayed. 
 
 Experiment!
 

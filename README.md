@@ -17,13 +17,18 @@ The `backup` folder contains easier to play hi-res, b-w version.
 
 ## 2024-12-07
 We teamed with Pecus and Alex and made a game out of the "tech demo". There are points, game over screen and possibility to add your own levels.
+
 If there is no DOS, you can play the single built-in level.
+
 With DOS, the game tries to load `LEVELnnn.DAT` file, starting from `LEVEL001.DAT` from the current directory.
+
 The levels can be edited on Atari with the enclosed `ED.COM` editor or a PC (end line characters can be CR, LF, CRFL or ATASCII EOL).
 
 ### Level file format:
 line 1: number of balls to be hit for the level to succeed
+
 line 2: `1` means single pixel width of the pattern, `2` double pixel width
+
 the following lines define the level. Any character is a pixel, space is a space, EOL is the end of line.
 
 The game displays 46 lines of pixels, but your levels should generally be shorter to make it playable.

@@ -641,6 +641,21 @@ bottomBounce
     ; so it is enough to switch dy sign 
     ; sbw #$ffff dy dy ;this does not compile :(
     negw dY
+    ; add racquet velocity (jacking the ball)
+    ;check for joystick now
+    lda PORTA
+    and #$04 ;left
+    bne jNotLeft
+    ; left
+    sbw dX #100
+jNotLeft
+    lda PORTA
+    and #$08 ;right
+    bne jNotRight
+    ;right
+    adw dX #100
+jNotRight
+    
     mva #maxLines+margin-2 ypos+1
     bit LevelType
     bmi noPingSFX   ; no SFX on title screen
